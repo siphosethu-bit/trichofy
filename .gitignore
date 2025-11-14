@@ -1,0 +1,22 @@
+# Python venv
+venv/
+env/
+*.pyc
+__pycache__/
+
+# FastAPI / backend
+*.log
+
+# Frontend build + dependencies
+tricofy-frontend/node_modules/
+tricofy-frontend/dist/
+
+# System / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Environment files
+.env
+*.env
