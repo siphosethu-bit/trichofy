@@ -7,34 +7,49 @@ from typing import List, Dict, Any
 import numpy as np
 from PIL import Image
 
-import albumentations as A
-from fastai.vision.all import load_learner, PILImage, RandTransform
-
-
 # ===== Albucore / Albumentations compatibility shim =====
 # Some Render environments install a version of `albucore`
 # that does not define `preserve_channel_dim`, but the
-# version of Albumentations you’re using expects it.
+# `albumentations` version used when we trained the model
+# still expects it to exist. We recreate it here BEFORE
+# importing albumentations so that the import does not fail.
 try:
-    import albucore.utils as _acu  # type: ignore
+    import albucore.utils as _acu
+    from typing import Callable
+    import numpy as _np
 
     if not hasattr(_acu, "preserve_channel_dim"):
-        def preserve_channel_dim(x, function, **kwargs):
-            """
-            Fallback that simply calls `function` on x.
 
-            The real utility keeps track of channel dimensions for some ops.
-            For our use-case (simple classification inference) this minimal
-            shim is sufficient.
+        def preserve_channel_dim(
+            func: Callable[..., _np.ndarray]
+        ) -> Callable[..., _np.ndarray]:
             """
-            return function(x, **kwargs)
+            Backwards-compat shim for old Albumentations code that expects
+            `albucore.utils.preserve_channel_dim`. Newer albucore removed it,
+            so we provide a tiny version that keeps the image channel dims.
+            """
 
-        setattr(_acu, "preserve_channel_dim", preserve_channel_dim)  # type: ignore[attr-defined]
+            def wrapper(image: _np.ndarray, *args, **kwargs) -> _np.ndarray:
+                orig_ndim = image.ndim
+                result = func(image, *args, **kwargs)
+                # If the number of dimensions changed, try to restore channels
+                if result.ndim == orig_ndim:
+                    return result
+                if orig_ndim == 3 and result.ndim == 2:
+                    # e.g. (H, W, C) -> (H, W); put channels back
+                    return result[..., None]
+                return result
+
+            return wrapper
+
+        # Attach our shim to albucore.utils so Albumentations can import it
+        _acu.preserve_channel_dim = preserve_channel_dim  # type: ignore[attr-defined]
 except Exception:
-    # If albucore is missing completely, albumentations will fail on its own.
-    # We keep this silent so the behaviour is the same as before.
+    # If albucore isn't present yet during install, just ignore.
+    # When it is finally imported the above will already be defined.
     pass
 
+# NOW it is safe to import albumentations
 import albumentations as A
 from fastai.vision.all import load_learner, PILImage, RandTransform
 
