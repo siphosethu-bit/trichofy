@@ -7,24 +7,33 @@ from typing import List, Dict, Any
 import numpy as np
 from PIL import Image
 
+import albumentations as A
+from fastai.vision.all import load_learner, PILImage, RandTransform
+
+
 # ===== Albucore / Albumentations compatibility shim =====
 # Some Render environments install a version of `albucore`
 # that does not define `preserve_channel_dim`, but the
 # version of Albumentations you’re using expects it.
 try:
-    import albucore.utils as acu  # type: ignore
+    import albucore.utils as _acu  # type: ignore
 
-    if not hasattr(acu, "preserve_channel_dim"):
-        # Simple no-op decorator that just calls the function.
-        def preserve_channel_dim(fn):
-            def wrapper(*args, **kwargs):
-                return fn(*args, **kwargs)
-            return wrapper
+    if not hasattr(_acu, "preserve_channel_dim"):
+        def preserve_channel_dim(x, function, **kwargs):
+            """
+            Fallback that simply calls `function` on x.
 
-        acu.preserve_channel_dim = preserve_channel_dim  # type: ignore
-        print("[Patch] Added missing albucore.utils.preserve_channel_dim")
-except Exception as e:
-    print("[Patch] albucore.utils not available, continuing without patch:", e)
+            The real utility keeps track of channel dimensions for some ops.
+            For our use-case (simple classification inference) this minimal
+            shim is sufficient.
+            """
+            return function(x, **kwargs)
+
+        setattr(_acu, "preserve_channel_dim", preserve_channel_dim)  # type: ignore[attr-defined]
+except Exception:
+    # If albucore is missing completely, albumentations will fail on its own.
+    # We keep this silent so the behaviour is the same as before.
+    pass
 
 import albumentations as A
 from fastai.vision.all import load_learner, PILImage, RandTransform
