@@ -7,6 +7,25 @@ from typing import List, Dict, Any
 import numpy as np
 from PIL import Image
 
+# ===== Albucore / Albumentations compatibility shim =====
+# Some Render environments install a version of `albucore`
+# that does not define `preserve_channel_dim`, but the
+# version of Albumentations you’re using expects it.
+try:
+    import albucore.utils as acu  # type: ignore
+
+    if not hasattr(acu, "preserve_channel_dim"):
+        # Simple no-op decorator that just calls the function.
+        def preserve_channel_dim(fn):
+            def wrapper(*args, **kwargs):
+                return fn(*args, **kwargs)
+            return wrapper
+
+        acu.preserve_channel_dim = preserve_channel_dim  # type: ignore
+        print("[Patch] Added missing albucore.utils.preserve_channel_dim")
+except Exception as e:
+    print("[Patch] albucore.utils not available, continuing without patch:", e)
+
 import albumentations as A
 from fastai.vision.all import load_learner, PILImage, RandTransform
 
@@ -134,7 +153,6 @@ HAIR_LABELS: List[str] = list(map(str, learn.dls.vocab))
 # 3) Simple product catalog & recommender
 # =========================================================
 
-# --- Real catalogue mapped to hair types + local images in React /public ---
 PRODUCT_CATALOG: List[Dict[str, Any]] = [
     {
         "name": "Afri’Pure Shea Butter + Marula Moisturising Hair Oil",
@@ -230,16 +248,27 @@ def recommend_products(hair_probs: Dict[str, float], top_k: int = 4) -> List[Dic
 
 app = FastAPI(title="Trichofy Hair API")
 
+# Allow localhost + optional deployed frontend origin from env
+frontend_origin = os.getenv("FRONTEND_ORIGIN")  # e.g. https://trichofy.vercel.app
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+if frontend_origin:
+    origins.append(frontend_origin)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Simple health / root check (Render will hit this)
+@app.get("/")
+def root():
+    return {"status": "ok", "message": "Trichofy Hair API is running."}
 
 
 def _predict_from_pil(img: Image.Image):
@@ -275,4 +304,6 @@ async def predict_endpoint(file: UploadFile = File(...)):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # Render (and other PaaS) usually inject PORT into the env
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run(app, host="0.0.0.0", port=port)
