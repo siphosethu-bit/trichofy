@@ -1,4 +1,5 @@
 import os
+import sys
 import inspect
 import pathlib
 from io import BytesIO
@@ -7,8 +8,16 @@ from typing import List, Dict, Any
 import numpy as np
 from PIL import Image
 
+# NEW: env + HTTP client for weather API
+from dotenv import load_dotenv
+import requests
+
+# Load environment variables from .env (if present)
+load_dotenv()
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
+
 # ===== Albucore / Albumentations compatibility shim =====
-# Some Render environments install a version of `albucore`
+# Some environments install a version of `albucore`
 # that does not define `preserve_channel_dim`, but the
 # `albumentations` version used when we trained the model
 # still expects it to exist. We recreate it here BEFORE
@@ -154,6 +163,10 @@ class AlbumentationsTransform(RandTransform):
         return img
 
 
+# 🔑 IMPORTANT: register stub on __main__ so torch.load can find it
+sys.modules["__main__"].AlbumentationsTransform = AlbumentationsTransform
+
+
 # =========================================================
 # 2) Load model
 # =========================================================
@@ -243,6 +256,7 @@ PRODUCT_CATALOG: List[Dict[str, Any]] = [
     },
 ]
 
+
 def recommend_products(hair_probs: Dict[str, float], top_k: int = 4) -> List[Dict[str, Any]]:
     # Dominant predicted hair type
     best_label = max(hair_probs, key=hair_probs.get)
@@ -289,7 +303,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Simple health / root check (Render will hit this)
+# Simple health / root check
 @app.get("/")
 def root():
     return {"status": "ok", "message": "Trichofy Hair API is running."}
@@ -325,9 +339,57 @@ async def predict_endpoint(file: UploadFile = File(...)):
     }
 
 
+# =========================================================
+# 5) Weather endpoint for Seasonal Hair Adjustments
+# =========================================================
+
+@app.get("/weather")
+def get_weather(city: str = "Johannesburg", country: str = "ZA"):
+    """
+    Fetch current weather for a given South African city using OpenWeatherMap.
+
+    Default: Johannesburg, ZA
+    """
+    if not WEATHER_API_KEY:
+        return {"error": "Weather API key not configured on the server."}
+
+    url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {
+        "q": f"{city},{country}",
+        "appid": WEATHER_API_KEY,
+        "units": "metric",
+    }
+
+    try:
+        response = requests.get(url, params=params, timeout=8)
+    except Exception as e:
+        return {"error": "Failed to reach weather service.", "details": str(e)}
+
+    if response.status_code != 200:
+        return {
+            "error": "Weather API returned an error.",
+            "status_code": response.status_code,
+            "details": response.text,
+        }
+
+    data = response.json()
+
+    weather_info = {
+        "city": data.get("name"),
+        "temp": data["main"]["temp"],
+        "feels_like": data["main"]["feels_like"],
+        "humidity": data["main"]["humidity"],
+        "condition": data["weather"][0]["main"],
+        "description": data["weather"][0]["description"],
+        "icon": data["weather"][0]["icon"],
+    }
+
+    return weather_info
+
+
 if __name__ == "__main__":
     import uvicorn
 
-    # Render (and other PaaS) usually inject PORT into the env
+    # Usually PORT is injected in env on hosting providers
     port = int(os.getenv("PORT", "8000"))
     uvicorn.run(app, host="0.0.0.0", port=port)

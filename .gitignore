@@ -15,7 +15,7 @@ tricofy-frontend/dist/
 .DS_Store
 Thumbs.db
 .vscode/
-.idea/
+.idea/*
 
 # Environment files
 .env
