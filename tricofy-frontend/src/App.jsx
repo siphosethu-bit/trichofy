@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import "./index.css";
 import heroImage from "./assets/hero.jpg";
 
-const API_URL = "http://127.0.0.1:8000/predict";
-const WEATHER_URL = "http://127.0.0.1:8000/weather";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const API_URL = `${BASE_URL}/predict`;
+const WEATHER_URL = `${BASE_URL}/weather`;
 
 // About page video (place file at /public/videos/trichofy-about.mp4)
 const ABOUT_VIDEO = "/videos/trichofy-about.mp4";
