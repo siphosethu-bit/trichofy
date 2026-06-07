@@ -15,11 +15,9 @@ import {
   TreatmentCard,
 } from "./components/ui";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://trichofy-backend.onrender.com";
-const API_ROOT = API_BASE_URL.replace(/\/$/, "");
-const API_URL = `${API_ROOT}/predict`;
-const WEATHER_URL = `${API_ROOT}/weather`;
+const BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const API_URL = `${BASE_URL}/predict`;
+const WEATHER_URL = `${BASE_URL}/weather`;
 
 const productImageMap = {
   "AfriPure Shea Butter + Marula Moisturising Hair Oil": "shea-butter.jpg.png",
