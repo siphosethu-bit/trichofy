@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import HairdryerScene from "./components/HairdryerScene";
 import "./index.css";
 import heroImage from "./assets/hero.jpg";
 import {
@@ -395,7 +396,10 @@ function Header({ path, go, menuOpen, setMenuOpen }) {
 function HomePage({ go }) {
   return (
     <div className="page home-page">
-      <section className="home-hero" style={{ backgroundImage: `url(${heroImage})` }}>
+      <section className="home-hero">
+        <div className="hero-3d-background">
+          <HairdryerScene />
+        </div>
         <div className="hero-shade" />
         <div className="hero-inner">
           <p className="eyebrow">AI hair intelligence</p>
