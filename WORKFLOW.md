@@ -77,7 +77,7 @@ Each feature is a **separate branch**. Complete one, merge via Pull Request, the
 |---|---|
 | **Branch** | `feature/weather-recommender` |
 | **Files** | `weather.py`, `app(real).py` |
-| **Status** | `weather.py` built and tested ✅ |
+| **Status** | `weather.py` built and not tested |
 | **Remaining** | Wire `weather.py` into `app(real).py` and test full pipeline |
 
 **Tasks:**
