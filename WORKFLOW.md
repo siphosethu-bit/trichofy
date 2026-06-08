@@ -21,7 +21,7 @@
 | Item | Detail |
 |---|---|
 | **Repo** | https://github.com/siphosethu-bit/trichofy |
-| **Live App** | https://trichofy-frontend-ymh1.onrender.com |
+| **Live App** | https://trichofy-frontend-ymh1.onrender.com | https://trichofy-frontend.onrender.com/
 | **Stack** | Python, Gradio, FastAI, PyTorch, Open-Meteo API |
 | **Deployment** | Render |
 
