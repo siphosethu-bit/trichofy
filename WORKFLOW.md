@@ -24,6 +24,7 @@
 | **Live App** | https://trichofy-frontend-ymh1.onrender.com | https://trichofy-frontend.onrender.com/
 | **Stack** | Python, Gradio, FastAI, PyTorch, Open-Meteo API |
 | **Deployment** | Render |
+| **Assistant Tool** | Trichofy Dev Hub Productivity Assistant (PartyRock) | https://partyrock.aws/u/WitnessLubisi/aPzph5eI_/Trichofy-Dev-Hub-Productivity-Assistant |
 
 ---
 
