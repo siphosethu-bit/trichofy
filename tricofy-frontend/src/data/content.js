@@ -2,6 +2,7 @@ export const navItems = [
   { path: "/", label: "Home" },
   { path: "/about", label: "About" },
   { path: "/analysis", label: "Hair Analysis" },
+  { path: "/health", label: "Health" },
   { path: "/treatments", label: "Treatments" },
   { path: "/products", label: "Products" },
   { path: "/providers", label: "Providers" },

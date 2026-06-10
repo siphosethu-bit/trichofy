@@ -21,6 +21,52 @@ const API_ROOT = API_BASE_URL.replace(/\/$/, "");
 const API_URL = `${API_ROOT}/predict`;
 const WEATHER_URL = `${API_ROOT}/weather`;
 
+const healthFeatures = [
+  {
+    title: "Scalp Concern Screening",
+    label: "Responsible screening",
+    description:
+      "Review visible signs such as dryness, flaking, irritation, redness, thinning, or unusual scalp texture.",
+  },
+  {
+    title: "Hair Loss Pattern Review",
+    label: "Health focused",
+    description: "Track visible changes in hair density and pattern over time.",
+  },
+  {
+    title: "Scalp Image History",
+    label: "Private by design",
+    description:
+      "Keep a private timeline of scalp images to compare progress across weeks or months.",
+  },
+  {
+    title: "Professional Guidance Pathway",
+    label: "Professional guidance",
+    description:
+      "Receive careful next-step guidance when a visible concern may require review by a dermatologist, trichologist, or pharmacist.",
+  },
+  {
+    title: "Care Recommendations",
+    label: "Coming soon",
+    description:
+      "Get general wellness guidance for maintaining scalp and hair health without making medical claims.",
+  },
+];
+
+const healthSteps = [
+  "Upload a clear scalp or hair image",
+  "Review visible hair and scalp indicators",
+  "Receive responsible guidance",
+  "Track changes privately over time",
+];
+
+const healthTrustPoints = [
+  "Trichofy Health is not a medical diagnosis.",
+  "It is designed for awareness, health focused screening, and early guidance.",
+  "Users should consult a qualified professional for medical concerns.",
+  "User images and health related information should be handled with privacy and care.",
+];
+
 const productImageMap = {
   "AfriPure Shea Butter + Marula Moisturising Hair Oil": "shea-butter.jpg.png",
   "Native Child Castor Oil - Hairgrowth Oil": "castor-oil.jpg.png",
@@ -146,6 +192,7 @@ function usePath() {
 export default function App() {
   const [path, navigate] = usePath();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [healthModalOpen, setHealthModalOpen] = useState(false);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -290,6 +337,7 @@ export default function App() {
 
   const pageProps = {
     go,
+    openHealthModal: () => setHealthModalOpen(true),
     file,
     preview,
     loading,
@@ -330,6 +378,7 @@ export default function App() {
         {path === "/" && <HomePage {...pageProps} />}
         {path === "/about" && <AboutPage go={go} />}
         {path === "/analysis" && <AnalysisPage {...pageProps} />}
+        {path === "/health" && <HealthPage openHealthModal={pageProps.openHealthModal} />}
         {path === "/treatments" && <TreatmentsPage {...pageProps} />}
         {path === "/products" && <ProductsPage {...pageProps} />}
         {path === "/providers" && <ProvidersPage {...pageProps} />}
@@ -342,6 +391,10 @@ export default function App() {
           <span>Premium hair intelligence for modern care.</span>
         </footer>
       )}
+      <HealthComingSoonModal
+        open={healthModalOpen}
+        onClose={() => setHealthModalOpen(false)}
+      />
     </div>
   );
 }
@@ -546,6 +599,152 @@ function AnalysisPage({
               </>
             )}
           </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function HealthPage({ openHealthModal }) {
+  return (
+    <div className="page health-page">
+      <section className="page-hero health-hero">
+        <div className="health-hero-copy">
+          <div className="health-label-row">
+            <span>Private by design</span>
+            <span>Coming soon</span>
+            <span>Health focused</span>
+          </div>
+          <PageIntro
+            eyebrow="Trichofy Health"
+            title="Trichofy Health"
+            text="A careful hair and scalp wellness experience designed to help users understand visible scalp concerns, track changes, and know when to seek professional guidance."
+          />
+          <div className="hero-actions">
+            <Button onClick={openHealthModal}>Explore Health Features</Button>
+            <Button variant="outline" onClick={openHealthModal}>
+              Join Early Access
+            </Button>
+          </div>
+        </div>
+        <div className="clinical-panel" aria-label="Health focused screening preview">
+          <div className="clinical-panel-top">
+            <span>Screening Preview</span>
+            <strong>Visible indicators only</strong>
+          </div>
+          <div className="scan-card">
+            <span />
+            <div>
+              <strong>Scalp comfort review</strong>
+              <p>Possible scalp concern noted for professional review if symptoms continue.</p>
+            </div>
+          </div>
+          <div className="clinical-metrics">
+            <div>
+              <span>Privacy</span>
+              <strong>Local controls</strong>
+            </div>
+            <div>
+              <span>Guidance</span>
+              <strong>Careful next steps</strong>
+            </div>
+          </div>
+          <p>
+            Designed for responsible guidance and awareness. Not a medical diagnosis.
+          </p>
+        </div>
+      </section>
+
+      <section className="section health-feature-section">
+        <SectionHeader
+          eyebrow="Premium wellness tools"
+          title="Clinical clarity for hair and scalp care."
+          text="Each feature is being shaped around visible scalp indicators, user privacy, and careful guidance that respects the role of qualified professionals."
+        />
+        <div className="health-feature-grid">
+          {healthFeatures.map((feature) => (
+            <button
+              type="button"
+              className="health-feature-card"
+              key={feature.title}
+              onClick={openHealthModal}
+            >
+              <span>{feature.label}</span>
+              <h3>{feature.title}</h3>
+              <p>{feature.description}</p>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="section health-steps-section">
+        <SectionHeader
+          eyebrow="How it works"
+          title="A measured flow from image to awareness."
+        />
+        <div className="health-step-grid">
+          {healthSteps.map((step, index) => (
+            <article key={step}>
+              <span>Step {index + 1}</span>
+              <h3>{step}</h3>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="section health-trust-section">
+        <div>
+          <p className="eyebrow">Trust and safety</p>
+          <h2>Built for careful wellness guidance, not medical claims.</h2>
+        </div>
+        <div className="health-trust-list">
+          {healthTrustPoints.map((point) => (
+            <article key={point}>
+              <span />
+              <p>{point}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function HealthComingSoonModal({ open, onClose }) {
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="health-modal-layer" role="presentation" onMouseDown={onClose}>
+      <section
+        className="health-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="health-modal-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <p className="eyebrow">Coming soon</p>
+        <h2 id="health-modal-title">Clinical Screening Coming Soon</h2>
+        <p>
+          Trichofy Health is being designed to help users understand visible hair and scalp
+          concerns with care, privacy, and responsible guidance. This feature is still under
+          development and will not replace professional medical advice.
+        </p>
+        <div className="health-modal-actions">
+          <Button onClick={onClose}>Join Early Access</Button>
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
         </div>
       </section>
     </div>
