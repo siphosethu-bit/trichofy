@@ -1,70 +1,40 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./index.css";
-import heroImage from "./assets/hero.jpg";
-import {
-  navItems,
-  productCatalog,
-  providerCategories,
-  treatmentTools,
-} from "./data/content";
-import {
-  Button,
-  PageIntro,
-  ProductCard,
-  SectionHeader,
-  TreatmentCard,
-} from "./components/ui";
+import { navItems, productCatalog, providerCategories, treatmentTools } from "./data/content";
+import { Button, PageIntro, ProductCard, SectionHeader, TreatmentCard } from "./components/ui";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "https://trichofy-backend.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://trichofy-backend.onrender.com";
 const API_ROOT = API_BASE_URL.replace(/\/$/, "");
 const API_URL = `${API_ROOT}/predict`;
 const WEATHER_URL = `${API_ROOT}/weather`;
 
-const healthFeatures = [
-  {
-    title: "Scalp Concern Screening",
-    label: "Responsible screening",
-    description:
-      "Review visible signs such as dryness, flaking, irritation, redness, thinning, or unusual scalp texture.",
-  },
-  {
-    title: "Hair Loss Pattern Review",
-    label: "Health focused",
-    description: "Track visible changes in hair density and pattern over time.",
-  },
-  {
-    title: "Scalp Image History",
-    label: "Private by design",
-    description:
-      "Keep a private timeline of scalp images to compare progress across weeks or months.",
-  },
-  {
-    title: "Professional Guidance Pathway",
-    label: "Professional guidance",
-    description:
-      "Receive careful next-step guidance when a visible concern may require review by a dermatologist, trichologist, or pharmacist.",
-  },
-  {
-    title: "Care Recommendations",
-    label: "Coming soon",
-    description:
-      "Get general wellness guidance for maintaining scalp and hair health without making medical claims.",
-  },
+const trustFeatures = [
+  { number: "01", title: "Hair type analysis", text: "Computer vision reads visible pattern and texture from one clear photograph." },
+  { number: "02", title: "Product intelligence", text: "Recommendations connect your profile to ingredients and formulas that make sense." },
+  { number: "03", title: "Personal routines", text: "A practical weekly rhythm shaped around your hair, time, and level of care." },
+  { number: "04", title: "Weather-aware care", text: "Live local conditions help you adapt moisture, protection, and styling decisions." },
 ];
 
-const healthSteps = [
-  "Upload a clear scalp or hair image",
-  "Review visible hair and scalp indicators",
-  "Receive responsible guidance",
-  "Track changes privately over time",
+const processSteps = [
+  ["01", "Share your hair", "Upload a clear image in natural light. Your photo becomes the beginning of a more personal consultation."],
+  ["02", "Meet the intelligence", "Trichofy studies visible pattern signals and compares them across five hair profiles."],
+  ["03", "Discover your profile", "See your dominant hair type and a clear, considered confidence breakdown."],
+  ["04", "Care with intention", "Turn your result into product matches, a weekly routine, and weather-aware guidance."],
 ];
 
-const healthTrustPoints = [
-  "Trichofy Health is not a medical diagnosis.",
-  "It is designed for awareness, health focused screening, and early guidance.",
-  "Users should consult a qualified professional for medical concerns.",
-  "User images and health related information should be handled with privacy and care.",
+const hairTypes = [
+  { name: "Straight", code: "Type 1", note: "Smooth, reflective and naturally fluid", image: "/contact.jpg", position: "50% 30%" },
+  { name: "Wavy", code: "Type 2", note: "Soft movement with an effortless S-pattern", image: "/trichofyBG.jpg", position: "10% 55%" },
+  { name: "Curly", code: "Type 3", note: "Defined spirals with expressive volume", image: "/contact.jpg", position: "50% 58%" },
+  { name: "Kinky", code: "Type 4", note: "Tight coils, beautiful density and versatility", image: "/trichofyBG.jpg", position: "28% 62%" },
+  { name: "Dreadlocks", code: "Protective style", note: "A storied style shaped with patience and care", image: "/trichofyBG.jpg", position: "76% 52%" },
+];
+
+const roadmap = [
+  { phase: "Now", title: "Scalp insights", text: "A careful view of visible dryness, flaking, irritation, and scalp comfort." },
+  { phase: "Next", title: "Hair health tracking", text: "A private visual timeline for noticing meaningful changes in density and condition." },
+  { phase: "Future", title: "Professional pathways", text: "Responsible guidance that helps connect concerns with qualified hair and health professionals." },
+  { phase: "Future", title: "Analysis history", text: "A lasting record of profiles, routines, products, and progress—owned by you." },
 ];
 
 const productImageMap = {
@@ -78,25 +48,20 @@ const productImageMap = {
   "AfriPure Jojoba Oil": "jojoba-oil.jpg.png",
 };
 
-function resolveImageSrc(maybeNameOrUrl) {
-  if (!maybeNameOrUrl) return null;
-  if (/^https?:\/\//i.test(maybeNameOrUrl) || maybeNameOrUrl.startsWith("/")) {
-    return maybeNameOrUrl;
-  }
-  return `/products/${maybeNameOrUrl}`;
+function resolveImageSrc(value) {
+  if (!value) return null;
+  if (/^https?:\/\//i.test(value) || value.startsWith("/")) return value;
+  return `/products/${value}`;
 }
 
 function weatherLabel(condition = "", icon = "") {
-  const c = condition.toLowerCase();
-  const i = icon.toLowerCase();
-  if (c.includes("thunder") || i.startsWith("11")) return "Storm";
-  if (c.includes("rain") || c.includes("drizzle") || i.startsWith("09") || i.startsWith("10")) {
-    return "Rain";
-  }
-  if (c.includes("snow") || i.startsWith("13")) return "Snow";
-  if (c.includes("cloud") || i.startsWith("03") || i.startsWith("04")) return "Cloudy";
-  if (c.includes("mist") || c.includes("fog") || c.includes("haze")) return "Misty";
-  if (c.includes("clear") || i.startsWith("01")) return "Clear";
+  const value = condition.toLowerCase();
+  if (value.includes("thunder") || icon.startsWith("11")) return "Stormy";
+  if (value.includes("rain") || value.includes("drizzle") || /^(09|10)/.test(icon)) return "Rainy";
+  if (value.includes("snow") || icon.startsWith("13")) return "Cold & snowy";
+  if (value.includes("cloud") || /^(03|04)/.test(icon)) return "Softly cloudy";
+  if (value.includes("mist") || value.includes("fog") || value.includes("haze")) return "Misty";
+  if (value.includes("clear") || icon.startsWith("01")) return "Clear skies";
   return "Current weather";
 }
 
@@ -105,94 +70,70 @@ function buildSeasonAdvice(hairType, weather) {
   const tips = [];
   const ht = hairType.toLowerCase();
   const { humidity, temp, condition } = weather;
-
-  if (ht.includes("kinky") || ht.includes("coily")) {
-    tips.push("Use rich creams and sealing oils to protect coils from dryness.");
-  } else if (ht.includes("curly")) {
-    tips.push("Pair a moisturising leave-in with a light defining cream or gel.");
-  } else if (ht.includes("wavy")) {
-    tips.push("Choose lighter creams or foams so waves keep movement.");
-  } else if (ht.includes("straight")) {
-    tips.push("Use lightweight serums and focus oils on the ends.");
-  }
-
-  if (humidity >= 70 || (condition || "").toLowerCase().includes("rain")) {
-    tips.push("Humidity is high. Add frizz control and seal your ends carefully.");
-  }
-  if (humidity <= 40) {
-    tips.push("Air is dry. Layer water-based moisture, then seal with oil.");
-  }
-  if (temp >= 28) {
-    tips.push("Heat is high. Keep styles simple and cleanse the scalp regularly.");
-  }
-  if (temp <= 12) {
-    tips.push("Cold weather calls for deeper conditioning and protected ends.");
-  }
-
-  return tips.length ? tips : ["Weather looks balanced. Keep your routine steady."];
+  if (ht.includes("kinky") || ht.includes("coily")) tips.push("Use a rich cream and sealing oil to protect your coils from moisture loss.");
+  else if (ht.includes("curly")) tips.push("Pair a moisturising leave-in with a light defining cream or gel.");
+  else if (ht.includes("wavy")) tips.push("Choose a light cream or foam so your waves keep their natural movement.");
+  else if (ht.includes("straight")) tips.push("Keep oils lightweight and concentrate them gently through your ends.");
+  if (humidity >= 70 || (condition || "").toLowerCase().includes("rain")) tips.push("Humidity is high today—add frizz control and seal your ends with care.");
+  if (humidity <= 40) tips.push("The air is dry. Layer water-based moisture, then finish with a light sealant.");
+  if (temp >= 28) tips.push("Warm conditions call for comfortable styles and regular, gentle scalp cleansing.");
+  if (temp <= 12) tips.push("Cool air can be drying. Deep condition and keep your ends protected.");
+  return tips.length ? tips : ["Conditions are balanced today. Your regular routine should serve you beautifully."];
 }
 
 function buildRoutinePlan(hairType, intensity = "balanced") {
   const ht = (hairType || "").toLowerCase();
   const textured = ht.includes("kinky") || ht.includes("coily") || ht.includes("curly");
-  const moistureWord = textured ? "rich cream" : "lightweight lotion";
-  const oilWord = textured ? "butter or oil" : "light serum";
-
+  const moisture = textured ? "rich cream" : "lightweight lotion";
+  const sealant = textured ? "butter or oil" : "light serum";
   return [
-    {
-      title: "Wash day",
-      when: intensity === "light" ? "Every 7 to 10 days" : "Once per week",
-      steps: [
-        "Cleanse with a gentle shampoo.",
-        "Deep condition for 15 to 30 minutes.",
-        `Apply leave-in, then ${moistureWord} and seal with ${oilWord}.`,
-      ],
-    },
-    {
-      title: "Mid-week moisture",
-      when: intensity === "intense" ? "Two to three times weekly" : "Mid-week",
-      steps: [
-        "Mist lightly with water or a water-based refresher.",
-        `Add a small amount of ${moistureWord} to mid-lengths and ends.`,
-        "Protect hair overnight with a satin bonnet or pillowcase.",
-      ],
-    },
-    {
-      title: "Scalp and care check",
-      when: "Weekly",
-      steps: [
-        "Check for buildup, flaking or tension.",
-        "Massage the scalp gently.",
-        "Adjust products if hair feels coated, dry or fragile.",
-      ],
-    },
+    { title: "The wash ritual", when: intensity === "light" ? "Every 7–10 days" : "Once a week", steps: ["Cleanse gently without stripping the scalp.", "Deep condition for 15–30 minutes.", `Layer leave-in, ${moisture}, then finish with ${sealant}.`] },
+    { title: "The moisture moment", when: intensity === "intense" ? "2–3 times weekly" : "Mid-week", steps: ["Mist lightly with water or a water-based refresher.", `Smooth a small amount of ${moisture} through the ends.`, "Protect your hair overnight with satin."] },
+    { title: "The weekly check-in", when: "Every week", steps: ["Notice buildup, flaking, dryness, or tension.", "Massage the scalp gently with your fingertips.", "Use how your hair feels to guide next week’s care."] },
   ];
+}
+
+function hairInsights(type) {
+  const value = (type || "").toLowerCase();
+  if (value.includes("kinky") || value.includes("coily")) return ["Your texture thrives with layered moisture and protected ends.", "Rich creams can support softness; use oils to seal rather than hydrate.", "Low-tension styles and gentle detangling help preserve length."];
+  if (value.includes("curly")) return ["Your curls benefit from moisture balanced with lightweight definition.", "Apply stylers to wet hair to encourage curl grouping and reduce frizz.", "Refresh selectively between wash days to avoid unnecessary buildup."];
+  if (value.includes("wavy")) return ["Your pattern benefits from hydration without excess weight.", "Light foams, lotions, and occasional clarifying help preserve movement.", "Scrunching and air-drying can encourage your natural wave pattern."];
+  if (value.includes("straight")) return ["Your hair reflects light beautifully when moisture and buildup are balanced.", "Keep conditioning products through the mid-lengths and ends.", "Lightweight serums can add polish without compromising movement."];
+  if (value.includes("dread")) return ["Consistent scalp care and complete drying are central to a healthy loc routine.", "Use lightweight hydration to avoid residue within the hair.", "Gentle maintenance helps protect the roots from unnecessary tension."];
+  return ["Your result is the start of a more intentional relationship with your hair."];
 }
 
 function usePath() {
   const [path, setPath] = useState(window.location.pathname);
-
   useEffect(() => {
-    const handlePop = () => setPath(window.location.pathname);
-    window.addEventListener("popstate", handlePop);
-    return () => window.removeEventListener("popstate", handlePop);
+    const onPop = () => setPath(window.location.pathname);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
-
-  const navigate = (nextPath) => {
-    if (nextPath !== window.location.pathname) {
-      window.history.pushState({}, "", nextPath);
-    }
-    setPath(nextPath);
+  const navigate = (next) => {
+    if (next !== window.location.pathname) window.history.pushState({}, "", next);
+    setPath(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-
   return [path, navigate];
+}
+
+function Icon({ name, size = 20 }) {
+  const paths = {
+    arrow: <><path d="M5 12h14"/><path d="m14 7 5 5-5 5"/></>,
+    upload: <><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/></>,
+    spark: <><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3Z"/><path d="m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z"/></>,
+    close: <><path d="m6 6 12 12"/><path d="M18 6 6 18"/></>,
+    menu: <><path d="M4 8h16"/><path d="M4 16h16"/></>,
+    check: <path d="m5 12 4 4L19 6"/>,
+    location: <><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></>,
+  };
+  return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
 
 export default function App() {
   const [path, navigate] = usePath();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [healthModalOpen, setHealthModalOpen] = useState(false);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -207,49 +148,31 @@ export default function App() {
   const [seasonError, setSeasonError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(providerCategories[0].id);
   const [extraFields, setExtraFields] = useState({});
-  const [providerForm, setProviderForm] = useState({
-    name: "",
-    brand: "",
-    hairTypes: "",
-    imageUrl: "",
-    description: "",
-  });
+  const [providerForm, setProviderForm] = useState({ name: "", brand: "", hairTypes: "", imageUrl: "", description: "" });
   const [providerProducts, setProviderProducts] = useState([]);
 
-  const activeCategory = providerCategories.find((category) => category.id === selectedCategory);
+  useEffect(() => {
+    document.body.classList.toggle("menu-is-open", menuOpen);
+    return () => document.body.classList.remove("menu-is-open");
+  }, [menuOpen]);
+
+  const activeCategory = providerCategories.find((item) => item.id === selectedCategory);
   const recommendedProducts = result?.products?.length ? result.products : [];
-  const productCategories = useMemo(
-    () => ["All", ...Array.from(new Set(productCatalog.map((product) => product.category)))],
-    []
-  );
-  const visibleProducts =
-    productFilter === "All"
-      ? productCatalog
-      : productCatalog.filter((product) => product.category === productFilter);
+  const productCategories = useMemo(() => ["All", ...new Set(productCatalog.map((item) => item.category))], []);
+  const visibleProducts = productFilter === "All" ? productCatalog : productCatalog.filter((item) => item.category === productFilter);
+  const go = (next) => { setMenuOpen(false); navigate(next); };
 
-  const go = (nextPath) => {
-    setMenuOpen(false);
-    navigate(nextPath);
-  };
-
-  const handleFileChange = (event) => {
-    const nextFile = event.target.files[0] || null;
-    setFile(nextFile);
+  const selectFile = (nextFile) => {
+    setFile(nextFile || null);
     setResult(null);
     setError("");
     setPreview(nextFile ? URL.createObjectURL(nextFile) : null);
   };
+  const handleFileChange = (event) => selectFile(event.target.files?.[0]);
 
   const handleAnalyze = async () => {
-    if (!file) {
-      setError("Please upload a clear hair photo first.");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-    setResult(null);
-
+    if (!file) { setError("Choose a clear hair photograph to begin your consultation."); return; }
+    setLoading(true); setError(""); setResult(null);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -257,821 +180,209 @@ export default function App() {
       if (!response.ok) throw new Error("Backend error");
       const data = await response.json();
       if (data.error) throw new Error(data.error);
-
       setResult({
         hair_type: data.hair_type || data.predicted_label || "Unknown",
         probabilities: data.probabilities || data.probs || {},
         products: (data.products || []).map((product) => {
-          const fromBackend = resolveImageSrc(product.image_url);
-          const fromMap = resolveImageSrc(productImageMap[product.name]);
-          return {
-            ...product,
-            category: product.category || "Recommended",
-            _resolved_img: fromBackend || fromMap || null,
-            image_url: fromBackend || fromMap || null,
-          };
+          const image = resolveImageSrc(productImageMap[product.name]) || resolveImageSrc(product.image_url);
+          return { ...product, category: product.category || "Selected for you", image_url: image };
         }),
       });
-    } catch (err) {
-      console.error(err);
-      setError("Could not analyze image. Please try again shortly.");
-    } finally {
-      setLoading(false);
-    }
+    } catch (requestError) {
+      console.error(requestError);
+      setError("We couldn’t complete your consultation just now. Please try again shortly.");
+    } finally { setLoading(false); }
   };
 
   const handleFetchWeather = async () => {
-    setSeasonLoading(true);
-    setSeasonError("");
-    setSeasonWeather(null);
-
+    setSeasonLoading(true); setSeasonError(""); setSeasonWeather(null);
     try {
-      const url = `${WEATHER_URL}?city=${encodeURIComponent(seasonCity)}&country=${encodeURIComponent(
-        seasonCountry
-      )}`;
+      const url = `${WEATHER_URL}?city=${encodeURIComponent(seasonCity)}&country=${encodeURIComponent(seasonCountry)}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Weather backend error");
       const data = await response.json();
       if (data.error) throw new Error(data.error);
       setSeasonWeather(data);
-    } catch (err) {
-      console.error(err);
-      setSeasonError("Could not fetch weather right now.");
-    } finally {
-      setSeasonLoading(false);
-    }
-  };
-
-  const handleProviderChange = (key, value) => {
-    setProviderForm((current) => ({ ...current, [key]: value }));
-  };
-
-  const handleExtraChange = (key, value) => {
-    setExtraFields((current) => ({ ...current, [key]: value }));
+    } catch (requestError) {
+      console.error(requestError);
+      setSeasonError("We couldn’t read the weather right now. Please try again in a moment.");
+    } finally { setSeasonLoading(false); }
   };
 
   const handleAddProviderProduct = (event) => {
     event.preventDefault();
-    if (!providerForm.name.trim() || !providerForm.brand.trim()) {
-      setError("Please provide product name and brand.");
-      return;
-    }
-
+    if (!providerForm.name.trim() || !providerForm.brand.trim()) { setError("Please add both a product name and brand."); return; }
     const entry = {
-      name: providerForm.name.trim(),
-      brand: providerForm.brand.trim(),
-      category: activeCategory.label,
-      hair_types: providerForm.hairTypes
-        ? providerForm.hairTypes.split(",").map((type) => type.trim()).filter(Boolean)
-        : ["All"],
+      name: providerForm.name.trim(), brand: providerForm.brand.trim(), category: activeCategory.label,
+      hair_types: providerForm.hairTypes ? providerForm.hairTypes.split(",").map((type) => type.trim()).filter(Boolean) : ["All hair"],
       image_url: resolveImageSrc(providerForm.imageUrl.trim()) || resolveImageSrc(productImageMap[providerForm.name]),
-      description: providerForm.description.trim() || "Submitted for Trichofy review.",
-      extras: { ...extraFields },
+      description: providerForm.description.trim() || "Submitted for consideration by the Trichofy curation team.", extras: { ...extraFields },
     };
-
     setProviderProducts((current) => [entry, ...current]);
-    setProviderForm({ name: "", brand: "", hairTypes: "", imageUrl: "", description: "" });
-    setExtraFields({});
-    setError("");
+    setProviderForm({ name: "", brand: "", hairTypes: "", imageUrl: "", description: "" }); setExtraFields({}); setError("");
   };
 
   const pageProps = {
-    go,
-    openHealthModal: () => setHealthModalOpen(true),
-    file,
-    preview,
-    loading,
-    error,
-    result,
-    handleFileChange,
-    handleAnalyze,
-    productFilter,
-    setProductFilter,
-    productCategories,
-    visibleProducts,
-    recommendedProducts,
-    routineIntensity,
-    setRoutineIntensity,
-    seasonCity,
-    setSeasonCity,
-    seasonCountry,
-    setSeasonCountry,
-    seasonWeather,
-    seasonLoading,
-    seasonError,
-    handleFetchWeather,
-    activeCategory,
-    selectedCategory,
-    setSelectedCategory,
-    providerForm,
-    handleProviderChange,
-    extraFields,
-    handleExtraChange,
-    providerProducts,
-    handleAddProviderProduct,
+    go, file, preview, loading, error, result, selectFile, handleFileChange, handleAnalyze,
+    productFilter, setProductFilter, productCategories, visibleProducts, recommendedProducts,
+    routineIntensity, setRoutineIntensity, seasonCity, setSeasonCity, seasonCountry, setSeasonCountry,
+    seasonWeather, seasonLoading, seasonError, handleFetchWeather, activeCategory, selectedCategory,
+    setSelectedCategory, providerForm, setProviderForm, extraFields, setExtraFields, providerProducts, handleAddProviderProduct,
   };
 
-  return (
-    <div className="site-shell">
-      <Header path={path} go={go} menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
-      <main>
-        {path === "/" && <HomePage {...pageProps} />}
-        {path === "/about" && <AboutPage go={go} />}
-        {path === "/analysis" && <AnalysisPage {...pageProps} />}
-        {path === "/health" && <HealthPage openHealthModal={pageProps.openHealthModal} />}
-        {path === "/treatments" && <TreatmentsPage {...pageProps} />}
-        {path === "/products" && <ProductsPage {...pageProps} />}
-        {path === "/providers" && <ProvidersPage {...pageProps} />}
-        {path === "/contact" && <ContactPage />}
-        {!navItems.some((item) => item.path === path) && <HomePage {...pageProps} />}
-      </main>
-      {path !== "/" && (
-        <footer className="site-footer">
-          <span>Trichofy</span>
-          <span>Premium hair intelligence for modern care.</span>
-        </footer>
-      )}
-      <HealthComingSoonModal
-        open={healthModalOpen}
-        onClose={() => setHealthModalOpen(false)}
-      />
-    </div>
-  );
+  return <div className="site-shell">
+    <Header path={path} go={go} menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+    <main>
+      {path === "/" && <HomePage go={go} />}
+      {path === "/about" && <AboutPage go={go} />}
+      {path === "/analysis" && <AnalysisPage {...pageProps} />}
+      {path === "/health" && <HealthPage go={go} />}
+      {path === "/treatments" && <TreatmentsPage {...pageProps} />}
+      {path === "/products" && <ProductsPage {...pageProps} />}
+      {path === "/providers" && <ProvidersPage {...pageProps} />}
+      {path === "/contact" && <ContactPage />}
+      {!navItems.some((item) => item.path === path) && <HomePage go={go} />}
+    </main>
+    <Footer go={go} />
+  </div>;
 }
 
 function Header({ path, go, menuOpen, setMenuOpen }) {
-  return (
-    <>
-      <header className="site-header">
-        <button className="brand-mark" type="button" onClick={() => go("/")}>
-          Trichofy
-        </button>
-        <nav className="desktop-nav" aria-label="Primary navigation">
-          {navItems.map((item) => (
-            <button
-              key={item.path}
-              type="button"
-              className={path === item.path ? "active" : ""}
-              onClick={() => go(item.path)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-        <button
-          type="button"
-          className="menu-button"
-          aria-label="Open menu"
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          <span />
-          <span />
-        </button>
-      </header>
-      <div className={`mobile-menu ${menuOpen ? "open" : ""}`}>
-        <nav aria-label="Mobile navigation">
-          {navItems.map((item) => (
-            <button
-              key={item.path}
-              type="button"
-              className={path === item.path ? "active" : ""}
-              onClick={() => go(item.path)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
+  return <>
+    <header className="site-header">
+      <button className="brand" onClick={() => go("/")} aria-label="Trichofy home"><span className="brand-mark">T</span><span>Trichofy</span></button>
+      <nav className="desktop-nav" aria-label="Primary navigation">
+        {navItems.filter((item) => !["/providers", "/contact"].includes(item.path)).map((item) => <button key={item.path} className={path === item.path ? "active" : ""} onClick={() => go(item.path)}>{item.label}</button>)}
+      </nav>
+      <Button className="header-cta" onClick={() => go("/analysis")}>Begin analysis <Icon name="arrow" size={17} /></Button>
+      <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label={menuOpen ? "Close menu" : "Open menu"}><Icon name={menuOpen ? "close" : "menu"} size={25} /></button>
+    </header>
+    <div className={`mobile-menu ${menuOpen ? "open" : ""}`} aria-hidden={!menuOpen}>
+      <div className="mobile-menu-inner">
+        <p className="kicker">Explore Trichofy</p>
+        <nav>{navItems.map((item, index) => <button key={item.path} onClick={() => go(item.path)} className={path === item.path ? "active" : ""}><span>0{index + 1}</span>{item.label}<Icon name="arrow" /></button>)}</nav>
+        <div className="mobile-menu-foot"><p>Hair care, made personal.</p><a href="mailto:witness.lubisi1@gmail.com">witness.lubisi1@gmail.com</a></div>
       </div>
-    </>
-  );
+    </div>
+  </>;
 }
 
 function HomePage({ go }) {
-  return (
-    <div className="page home-page">
-      <section className="home-hero" style={{ backgroundImage: `url(${heroImage})` }}>
-        <div className="hero-shade" />
-        <div className="hero-inner">
-          <p className="eyebrow">AI hair intelligence</p>
-          <h1>Understand Your Hair Like Never Before</h1>
-          <p>
-            AI-powered hair analysis that helps you discover the products, routines and treatments
-            that truly match your hair.
-          </p>
-          <div className="hero-actions">
-            <Button onClick={() => go("/analysis")}>Analyze My Hair</Button>
-            <Button variant="outline" onClick={() => go("/products")}>
-              Explore Products
-            </Button>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
+  return <div className="home-page">
+    <section className="home-hero">
+      <div className="hero-content reveal"><p className="kicker light">The future of personal hair care</p><h1>Intelligence for the hair you live in.</h1><p className="hero-copy">A thoughtful AI consultation that helps you understand your texture, choose with confidence, and care for your hair more intentionally.</p><div className="button-row"><Button onClick={() => go("/analysis")}>Analyze my hair <Icon name="arrow" /></Button><Button variant="glass" onClick={() => go("/treatments")}>Explore treatments</Button></div></div>
+      <div className="hero-signature"><span>01</span><p>One image.<br/>A more personal ritual.</p></div>
+      <div className="scroll-cue"><span /> Discover</div>
+    </section>
+
+    <section className="trust-section section-pad">
+      <SectionHeader eyebrow="Beauty meets intelligence" title="Care that begins with understanding." text="Trichofy turns visual hair signals into calm, useful direction—so your routine feels less like trial and error, and more like knowing." />
+      <div className="trust-list">{trustFeatures.map((feature) => <article className="trust-item" key={feature.title}><span>{feature.number}</span><div><h3>{feature.title}</h3><p>{feature.text}</p></div><Icon name="arrow" /></article>)}</div>
+    </section>
+
+    <section className="process-section section-pad">
+      <div className="process-intro"><p className="kicker light">Your consultation</p><h2>From one photograph to a ritual that feels like yours.</h2><Button variant="light" onClick={() => go("/analysis")}>Start your profile <Icon name="arrow" /></Button></div>
+      <div className="process-steps">{processSteps.map(([number, title, text]) => <article key={number}><span>{number}</span><div><h3>{title}</h3><p>{text}</p></div></article>)}</div>
+    </section>
+
+    <section className="hair-showcase section-pad">
+      <SectionHeader eyebrow="Every pattern has a language" title="Five profiles. Infinite expressions." text="Hair is personal, textured, storied. Our intelligence begins by recognizing the visible pattern—and never ends by reducing you to it." align="center" />
+      <div className="hair-type-track">{hairTypes.map((type) => <article className="hair-type-card" key={type.name} style={{ "--hair-image": `url(${type.image})`, "--hair-position": type.position }}><div className="hair-type-overlay"/><div><span>{type.code}</span><h3>{type.name}</h3><p>{type.note}</p></div></article>)}</div>
+    </section>
+
+    <section className="vision-section section-pad">
+      <div className="vision-image"><img src="/trichofyBG.jpg" alt="A protective hairstyle being carefully created"/><span>Hair intelligence<br/>with a human heart.</span></div>
+      <div className="vision-copy"><p className="kicker">Beyond the mirror</p><h2>The future of hair care is deeply personal.</h2><p className="lead">We imagine a world where understanding your hair is as natural as caring for it.</p><p>Trichofy is growing into a living hair intelligence platform—connecting pattern, environment, products, routines, and eventually scalp wellness into one considered experience.</p><div className="vision-points"><span>Hair understanding</span><span>Weather intelligence</span><span>Product intelligence</span><span>Future scalp health</span></div><Button variant="outline" onClick={() => go("/about")}>Our point of view <Icon name="arrow" /></Button></div>
+    </section>
+
+    <section className="home-closing"><p className="kicker light">Begin with understanding</p><h2>Your hair has always been telling you what it needs.</h2><p>Now there is a more thoughtful way to listen.</p><Button variant="light" onClick={() => go("/analysis")}>Discover my hair profile <Icon name="arrow" /></Button></section>
+  </div>;
 }
 
 function AboutPage({ go }) {
-  return (
-    <div className="page">
-      <section className="page-hero split-hero">
-        <PageIntro
-          eyebrow="About Trichofy"
-          title="A more intelligent way to understand hair."
-          text="Trichofy was created for women who want hair care to feel clearer, more personal and more beautiful."
-        />
-        <div className="portrait-frame">
-          <img src="/contact.jpg" alt="Natural hair portrait" />
-        </div>
-      </section>
-      <section className="section editorial-grid">
-        <article>
-          <p className="eyebrow">Hair intelligence</p>
-          <h2>From visual signals to useful care decisions.</h2>
-        </article>
-        <div className="copy-stack">
-          <p>
-            Trichofy uses computer vision to read visible hair characteristics from a clear image.
-            The experience is designed to support natural hair, curls, coils, waves, straight hair
-            and protective styles with the same level of care.
-          </p>
-          <p>
-            The platform then connects analysis to product matching, ingredient guidance and routine
-            planning. The result is a beauty experience that feels considered instead of clinical.
-          </p>
-          <Button onClick={() => go("/analysis")}>Start Analysis</Button>
-        </div>
-      </section>
-      <section className="section value-grid">
-        {["Computer vision", "Product matching", "Routine clarity"].map((title) => (
-          <article key={title}>
-            <h3>{title}</h3>
-            <p>
-              A focused layer of intelligence that makes hair care more understandable, more
-              personal and easier to act on.
-            </p>
-          </article>
-        ))}
-      </section>
-    </div>
-  );
+  return <div className="page about-page">
+    <section className="editorial-hero"><div><p className="kicker">Our philosophy</p><h1>Hair care should feel personal, never prescriptive.</h1><p>We are building a more intelligent, beautiful relationship between women and the hair they live in.</p></div><figure><img src="/contact.jpg" alt="A woman celebrating her natural hair"/><figcaption>Beauty, understood.</figcaption></figure></section>
+    <section className="manifesto section-pad"><span className="drop-number">01</span><div><p className="kicker">Why Trichofy</p><h2>Less guessing.<br/>More knowing.</h2></div><div className="prose"><p>Too much of hair care is built around broad labels, crowded shelves, and expensive trial and error. Trichofy begins somewhere quieter: with your own hair.</p><p>Computer vision helps us read visible pattern and texture. Thoughtful product and weather intelligence then turns that understanding into decisions you can actually use.</p><Button onClick={() => go("/analysis")}>Meet your hair profile <Icon name="arrow" /></Button></div></section>
+    <section className="values-band"><p>Our work lives where</p><div><span>Beauty</span><i>meets</i><span>Intelligence</span><i>meets</i><span>Care</span></div></section>
+  </div>;
 }
 
-function AnalysisPage({
-  preview,
-  loading,
-  error,
-  result,
-  handleFileChange,
-  handleAnalyze,
-  go,
-}) {
-  return (
-    <div className="page">
-      <section className="page-hero analysis-hero">
-        <PageIntro
-          eyebrow="Hair Analysis"
-          title="Your flagship hair intelligence experience."
-          text="Upload a clear hair image and let Trichofy translate what it sees into hair type confidence, routine direction and product matches."
-          align="center"
-        />
-      </section>
+function AnalysisPage({ file, preview, loading, error, result, selectFile, handleFileChange, handleAnalyze, go }) {
+  const [dragging, setDragging] = useState(false);
+  const drop = (event) => { event.preventDefault(); setDragging(false); const next = event.dataTransfer.files?.[0]; if (next?.type.startsWith("image/")) selectFile(next); };
+  const probabilities = result ? Object.entries(result.probabilities || {}).sort((a, b) => b[1] - a[1]) : [];
+  const confidence = probabilities[0]?.[1] || 0;
+  return <div className="page analysis-page">
+    <section className="analysis-intro"><PageIntro eyebrow="The Trichofy consultation" title="Let’s get to know your hair." text="One clear photograph becomes a considered profile—your visible pattern, confidence reading, care insights, and product direction." align="center"/><div className="consultation-progress"><span className={file ? "complete" : "active"}>01 <b>Photograph</b></span><i/><span className={loading ? "active" : result ? "complete" : ""}>02 <b>Analysis</b></span><i/><span className={result ? "active" : ""}>03 <b>Your profile</b></span></div></section>
+    <section className={`consultation-shell section-pad ${result ? "has-result" : ""}`}>
+      <div className="upload-consultation">
+        <div className="consultation-heading"><span>01</span><div><p className="kicker">Your photograph</p><h2>Show us your hair as it naturally is.</h2><p>For the most useful reading, use soft natural light and keep your hair clearly visible in the frame.</p></div></div>
+        <label className={`premium-upload ${dragging ? "dragging" : ""} ${preview ? "with-preview" : ""}`} onDragOver={(event) => { event.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)} onDrop={drop}>
+          <input type="file" accept="image/*" onChange={handleFileChange}/>
+          {preview ? <><img src={preview} alt="Your selected hair"/><div className="preview-actions"><span>Change photograph</span><small>{fileLabel(preview)}</small></div></> : <div className="upload-empty"><span className="upload-icon"><Icon name="upload" size={28}/></span><h3>Drop your photograph here</h3><p>or choose one from your device</p><small>JPG, PNG or a phone camera image</small></div>}
+        </label>
+        <div className="photo-guidance"><span><Icon name="check"/> Natural light</span><span><Icon name="check"/> Hair in focus</span><span><Icon name="check"/> Minimal obstruction</span></div>
+        <Button className="analyze-button" onClick={handleAnalyze} disabled={loading}>{loading ? <><span className="button-loader"/> Reading your hair…</> : <>Reveal my hair profile <Icon name="spark"/></>}</Button>
+        {error && <p className="form-error">{error}</p>}
+      </div>
 
-      <section className="section analysis-flow">
-        <div className="step-rail">
-          {["Upload image", "AI analysis", "Results", "Recommended products"].map((step, index) => (
-            <div className="step-item" key={step}>
-              <span>{index + 1}</span>
-              <p>{step}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="analysis-grid">
-          <div className="analysis-card upload-card">
-            <p className="eyebrow">Step 1</p>
-            <h2>Upload your hair image</h2>
-            <p>Use natural light and keep the hair clearly visible for the strongest analysis.</p>
-            <label className="upload-zone">
-              <input type="file" accept="image/*" onChange={handleFileChange} />
-              <span>Choose a hair image</span>
-              <small>PNG, JPG or phone camera image</small>
-            </label>
-            {preview && (
-              <div className="preview-frame">
-                <img src={preview} alt="Hair upload preview" />
-              </div>
-            )}
-            <Button onClick={handleAnalyze} disabled={loading}>
-              {loading ? "Analyzing" : "Analyze My Hair"}
-            </Button>
-            {error && <p className="error">{error}</p>}
-          </div>
-
-          <div className="analysis-card result-card">
-            <p className="eyebrow">Step 3</p>
-            <h2>Your results</h2>
-            {!result && <p>Your hair profile and recommendations will appear here after analysis.</p>}
-            {result && (
-              <>
-                <div className="result-summary">
-                  <span>Predicted hair type</span>
-                  <strong>{result.hair_type}</strong>
-                </div>
-                {result.probabilities && (
-                  <div className="confidence-list">
-                    {Object.entries(result.probabilities)
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([label, prob]) => (
-                        <div className="confidence-row" key={label}>
-                          <span>{label}</span>
-                          <div>
-                            <i style={{ width: `${(prob * 100).toFixed(1)}%` }} />
-                          </div>
-                          <b>{(prob * 100).toFixed(1)}%</b>
-                        </div>
-                      ))}
-                  </div>
-                )}
-                <Button variant="outline" onClick={() => go("/products")}>
-                  View Product Matches
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
+      <div className={`profile-panel ${result ? "visible" : ""}`}>
+        {!result && <div className="profile-placeholder"><span className="profile-orbit"><Icon name="spark" size={30}/></span><p className="kicker">Your profile awaits</p><h2>A consultation, not a collection of numbers.</h2><p>Your hair type, confidence, care insights, and selected products will appear here.</p></div>}
+        {result && <>
+          <div className="profile-top"><p className="kicker">Your hair profile</p><span>Analysis complete</span></div>
+          <div className="profile-identity"><div><span>Primary pattern</span><h2>{result.hair_type}</h2><p>{Math.round(confidence * 100)}% confidence</p></div><div className="confidence-ring" style={{ "--confidence": `${confidence * 360}deg` }}><strong>{Math.round(confidence * 100)}</strong><span>%</span></div></div>
+          <div className="confidence-breakdown"><p>Pattern confidence</p>{probabilities.map(([label, probability]) => <div key={label}><span>{label}</span><i><b style={{ width: `${probability * 100}%` }}/></i><strong>{(probability * 100).toFixed(0)}%</strong></div>)}</div>
+          <div className="profile-insights"><p className="kicker">What this means for your care</p>{hairInsights(result.hair_type).map((insight) => <p key={insight}><Icon name="spark" size={16}/>{insight}</p>)}</div>
+          <div className="profile-actions"><Button onClick={() => go("/products")}>See my product edit <Icon name="arrow"/></Button><Button variant="outline" onClick={() => go("/treatments")}>Build my ritual</Button></div>
+        </>}
+      </div>
+    </section>
+    {result?.products?.length > 0 && <section className="profile-products section-pad"><SectionHeader eyebrow="Selected for your profile" title="A considered edit for your hair." text="These products were matched to the dominant pattern in your analysis."/><div className="product-grid featured">{result.products.slice(0, 3).map((product, index) => <ProductCard product={product} key={`${product.name}-${index}`}/>)}</div></section>}
+  </div>;
 }
 
-function HealthPage({ openHealthModal }) {
-  return (
-    <div className="page health-page">
-      <section className="page-hero health-hero">
-        <div className="health-hero-copy">
-          <div className="health-label-row">
-            <span>Private by design</span>
-            <span>Coming soon</span>
-            <span>Health focused</span>
-          </div>
-          <PageIntro
-            eyebrow="Trichofy Health"
-            title="Trichofy Health"
-            text="A careful hair and scalp wellness experience designed to help users understand visible scalp concerns, track changes, and know when to seek professional guidance."
-          />
-          <div className="hero-actions">
-            <Button onClick={openHealthModal}>Explore Health Features</Button>
-            <Button variant="outline" onClick={openHealthModal}>
-              Join Early Access
-            </Button>
-          </div>
-        </div>
-        <div className="clinical-panel" aria-label="Health focused screening preview">
-          <div className="clinical-panel-top">
-            <span>Screening Preview</span>
-            <strong>Visible indicators only</strong>
-          </div>
-          <div className="scan-card">
-            <span />
-            <div>
-              <strong>Scalp comfort review</strong>
-              <p>Possible scalp concern noted for professional review if symptoms continue.</p>
-            </div>
-          </div>
-          <div className="clinical-metrics">
-            <div>
-              <span>Privacy</span>
-              <strong>Local controls</strong>
-            </div>
-            <div>
-              <span>Guidance</span>
-              <strong>Careful next steps</strong>
-            </div>
-          </div>
-          <p>
-            Designed for responsible guidance and awareness. Not a medical diagnosis.
-          </p>
-        </div>
-      </section>
+function fileLabel() { return "Ready for analysis"; }
 
-      <section className="section health-feature-section">
-        <SectionHeader
-          eyebrow="Premium wellness tools"
-          title="Clinical clarity for hair and scalp care."
-          text="Each feature is being shaped around visible scalp indicators, user privacy, and careful guidance that respects the role of qualified professionals."
-        />
-        <div className="health-feature-grid">
-          {healthFeatures.map((feature) => (
-            <button
-              type="button"
-              className="health-feature-card"
-              key={feature.title}
-              onClick={openHealthModal}
-            >
-              <span>{feature.label}</span>
-              <h3>{feature.title}</h3>
-              <p>{feature.description}</p>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="section health-steps-section">
-        <SectionHeader
-          eyebrow="How it works"
-          title="A measured flow from image to awareness."
-        />
-        <div className="health-step-grid">
-          {healthSteps.map((step, index) => (
-            <article key={step}>
-              <span>Step {index + 1}</span>
-              <h3>{step}</h3>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="section health-trust-section">
-        <div>
-          <p className="eyebrow">Trust and safety</p>
-          <h2>Built for careful wellness guidance, not medical claims.</h2>
-        </div>
-        <div className="health-trust-list">
-          {healthTrustPoints.map((point) => (
-            <article key={point}>
-              <span />
-              <p>{point}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
+function HealthPage({ go }) {
+  return <div className="page health-page">
+    <section className="health-hero"><div><p className="kicker light">The next chapter</p><h1>Hair wellness, seen more clearly.</h1><p>We are carefully building the next expression of Trichofy: responsible tools for understanding visible scalp and hair-health changes over time.</p><Button variant="light" onClick={() => go("/contact")}>Follow the journey <Icon name="arrow"/></Button></div><span className="health-hero-word">Health</span></section>
+    <section className="roadmap-section section-pad"><SectionHeader eyebrow="The innovation roadmap" title="Built slowly. Built responsibly." text="Hair and scalp wellness deserve more than a rushed feature. These capabilities are being shaped around privacy, careful language, and the role of qualified professionals."/><div className="roadmap-list">{roadmap.map((item, index) => <article key={item.title}><span>0{index + 1}</span><div><p>{item.phase}</p><h3>{item.title}</h3></div><p>{item.text}</p></article>)}</div></section>
+    <section className="health-principles section-pad"><div><p className="kicker">Our promise</p><h2>Awareness without alarm. Guidance without overclaiming.</h2></div><div><p>Trichofy Health will never position a visual signal as a medical diagnosis. It is being designed to support awareness, careful tracking, and better-informed conversations with professionals.</p><ul><li>Privacy-led image handling</li><li>Responsible wellness language</li><li>Clear professional referral pathways</li></ul></div></section>
+  </div>;
 }
 
-function HealthComingSoonModal({ open, onClose }) {
-  useEffect(() => {
-    if (!open) return undefined;
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") onClose();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  return (
-    <div className="health-modal-layer" role="presentation" onMouseDown={onClose}>
-      <section
-        className="health-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="health-modal-title"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <p className="eyebrow">Coming soon</p>
-        <h2 id="health-modal-title">Clinical Screening Coming Soon</h2>
-        <p>
-          Trichofy Health is being designed to help users understand visible hair and scalp
-          concerns with care, privacy, and responsible guidance. This feature is still under
-          development and will not replace professional medical advice.
-        </p>
-        <div className="health-modal-actions">
-          <Button onClick={onClose}>Join Early Access</Button>
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </section>
-    </div>
-  );
+function TreatmentsPage({ result, routineIntensity, setRoutineIntensity, seasonCity, setSeasonCity, seasonCountry, setSeasonCountry, seasonWeather, seasonLoading, seasonError, handleFetchWeather }) {
+  return <div className="page treatments-page">
+    <section className="treatment-hero"><PageIntro eyebrow="Your care consultation" title="Rituals that move with your hair—and your life." text="Explore focused treatment intelligence, then turn your profile into a weekly rhythm that responds to the world around you."/><div className="treatment-hero-art"><span>Care is not a correction.</span><strong>It is a ritual.</strong></div></section>
+    <section className="treatment-library section-pad"><SectionHeader eyebrow="Treatment library" title="Begin with what your hair is asking for."/><div className="treatment-grid">{treatmentTools.map((treatment) => <TreatmentCard treatment={treatment} key={treatment.id}/>)}</div></section>
+    <section className="ritual-builder section-pad">
+      <div className="ritual-panel"><div className="panel-number">01</div><p className="kicker">Your weekly ritual</p><h2>A rhythm you can return to.</h2><p>Choose the level of care that fits your week. We’ll shape the details around your latest hair profile.</p><div className="segmented-control">{["light", "balanced", "intense"].map((level) => <button className={routineIntensity === level ? "active" : ""} onClick={() => setRoutineIntensity(level)} key={level}>{level}</button>)}</div>{!result ? <EmptyConsultation/> : <div className="routine-timeline">{buildRoutinePlan(result.hair_type, routineIntensity).map((block, index) => <article key={block.title}><span>0{index + 1}</span><div><p>{block.when}</p><h3>{block.title}</h3><ul>{block.steps.map((step) => <li key={step}>{step}</li>)}</ul></div></article>)}</div>}</div>
+      <div className="weather-panel"><div className="panel-number">02</div><p className="kicker">Your local conditions</p><h2>Care for the weather you’re in.</h2><p>Temperature and humidity can change what your hair needs. Enter your location for a thoughtful adjustment.</p><div className="location-fields"><label><span>City</span><input value={seasonCity} onChange={(event) => setSeasonCity(event.target.value)}/></label><label><span>Country</span><input value={seasonCountry} onChange={(event) => setSeasonCountry(event.target.value)}/></label></div><Button onClick={handleFetchWeather} disabled={seasonLoading}>{seasonLoading ? "Reading the weather…" : <><Icon name="location"/> Read my conditions</>}</Button>{seasonError && <p className="form-error">{seasonError}</p>}{seasonWeather && <div className="weather-result"><div><span>{weatherLabel(seasonWeather.condition, seasonWeather.icon)}</span><strong>{seasonWeather.temp.toFixed(0)}°</strong><p>{seasonWeather.city} · {seasonWeather.humidity}% humidity</p></div>{result ? <ul>{buildSeasonAdvice(result.hair_type, seasonWeather).map((tip) => <li key={tip}>{tip}</li>)}</ul> : <p>Complete your hair analysis to turn today’s conditions into personal guidance.</p>}</div>}</div>
+    </section>
+  </div>;
 }
 
-function TreatmentsPage({
-  result,
-  routineIntensity,
-  setRoutineIntensity,
-  seasonCity,
-  setSeasonCity,
-  seasonCountry,
-  setSeasonCountry,
-  seasonWeather,
-  seasonLoading,
-  seasonError,
-  handleFetchWeather,
-}) {
-  return (
-    <div className="page">
-      <section className="page-hero">
-        <PageIntro
-          eyebrow="Treatments"
-          title="Targeted care guidance for every hair moment."
-          text="Explore treatment intelligence for hydration, damage, density, scalp health, curl pattern and routine planning."
-          align="center"
-        />
-      </section>
-      <section className="section">
-        <div className="treatment-grid">
-          {treatmentTools.map((treatment) => (
-            <TreatmentCard treatment={treatment} key={treatment.id} />
-          ))}
-        </div>
-      </section>
-      <section className="section treatment-tools">
-        <div className="analysis-card">
-          <p className="eyebrow">Routine builder</p>
-          <h2>Build a weekly rhythm</h2>
-          <div className="filter-row">
-            {["light", "balanced", "intense"].map((level) => (
-              <button
-                type="button"
-                className={routineIntensity === level ? "active" : ""}
-                key={level}
-                onClick={() => setRoutineIntensity(level)}
-              >
-                {level === "intense" ? "Intense care" : level}
-              </button>
-            ))}
-          </div>
-          {!result && <p>Run Hair Analysis first to personalize this routine.</p>}
-          {result && (
-            <div className="routine-list">
-              {buildRoutinePlan(result.hair_type, routineIntensity).map((block) => (
-                <article key={block.title}>
-                  <h3>{block.title}</h3>
-                  <span>{block.when}</span>
-                  <ul>
-                    {block.steps.map((step) => (
-                      <li key={step}>{step}</li>
-                    ))}
-                  </ul>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="analysis-card">
-          <p className="eyebrow">Seasonal care</p>
-          <h2>Weather-aware adjustments</h2>
-          <div className="two-fields">
-            <label>
-              <span>City</span>
-              <input value={seasonCity} onChange={(event) => setSeasonCity(event.target.value)} />
-            </label>
-            <label>
-              <span>Country</span>
-              <input value={seasonCountry} onChange={(event) => setSeasonCountry(event.target.value)} />
-            </label>
-          </div>
-          <Button onClick={handleFetchWeather} disabled={seasonLoading}>
-            {seasonLoading ? "Fetching" : "Refresh Weather"}
-          </Button>
-          {seasonError && <p className="error">{seasonError}</p>}
-          {seasonWeather && (
-            <div className="weather-card">
-              <strong>{weatherLabel(seasonWeather.condition, seasonWeather.icon)}</strong>
-              <span>
-                {seasonWeather.temp.toFixed(1)}C in {seasonWeather.city}
-              </span>
-              {result && (
-                <ul>
-                  {buildSeasonAdvice(result.hair_type, seasonWeather).map((tip) => (
-                    <li key={tip}>{tip}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-    </div>
-  );
+function EmptyConsultation() { return <div className="empty-consultation"><Icon name="spark"/><p>Complete your hair analysis first, and your personal ritual will meet you here.</p><a href="/analysis">Begin analysis</a></div>; }
+
+function ProductsPage({ productFilter, setProductFilter, productCategories, visibleProducts, recommendedProducts, go }) {
+  return <div className="page products-page">
+    <section className="shop-hero"><div><p className="kicker">The Trichofy edit</p><h1>Less product noise.<br/>More beautiful choices.</h1><p>A considered collection of oils, hydrators, repair treatments, and scalp care—curated around what different hair profiles truly need.</p></div><div className="shop-hero-products"><img src="/products/marula-oil.jpg.png" alt="Marula hair oil"/><img src="/products/shea-butter.jpg.png" alt="Shea butter hair care"/></div></section>
+    {recommendedProducts.length > 0 && <section className="recommendation-edit section-pad"><SectionHeader eyebrow="Your personal edit" title="Chosen with your profile in mind." text="Recommendations from your latest Trichofy consultation."/><div className="product-grid featured">{recommendedProducts.map((product, index) => <ProductCard product={product} key={`${product.name}-${index}`}/>)}</div></section>}
+    <section className="shop-section section-pad"><div className="shop-heading"><SectionHeader eyebrow="Explore the collection" title="Care, beautifully considered."/><div className="filter-pills">{productCategories.map((category) => <button key={category} className={productFilter === category ? "active" : ""} onClick={() => setProductFilter(category)}>{category}</button>)}</div></div>{recommendedProducts.length === 0 && <div className="personal-edit-prompt"><div><Icon name="spark"/><p><strong>Unlock your personal edit.</strong><br/>Analyze your hair to see products selected for your profile.</p></div><Button variant="outline" onClick={() => go("/analysis")}>Analyze my hair</Button></div>}<div className="product-grid">{visibleProducts.map((product) => <ProductCard product={product} key={product.name}/>)}</div></section>
+  </div>;
 }
 
-function ProductsPage({
-  productFilter,
-  setProductFilter,
-  productCategories,
-  visibleProducts,
-  recommendedProducts,
-  go,
-}) {
-  return (
-    <div className="page">
-      <section className="page-hero">
-        <PageIntro
-          eyebrow="Product Recommendations"
-          title="A beauty catalog shaped by intelligence."
-          text="Browse curated product categories or review recommendations from your latest hair analysis."
-          align="center"
-        />
-      </section>
-      <section className="section">
-        {recommendedProducts.length > 0 && (
-          <div className="recommendation-panel">
-            <SectionHeader eyebrow="Your matches" title="Recommended from your analysis." />
-            <div className="product-grid">
-              {recommendedProducts.map((product, index) => (
-                <ProductCard product={product} key={`${product.name}-${index}`} />
-              ))}
-            </div>
-          </div>
-        )}
-        {recommendedProducts.length === 0 && (
-          <div className="soft-note action-note">
-            Analyze your hair to unlock personalized product matches.
-            <Button onClick={() => go("/analysis")}>Analyze My Hair</Button>
-          </div>
-        )}
-        <div className="catalog-head">
-          <SectionHeader eyebrow="Catalog" title="Explore by care goal." />
-          <div className="filter-row">
-            {productCategories.map((category) => (
-              <button
-                key={category}
-                type="button"
-                className={productFilter === category ? "active" : ""}
-                onClick={() => setProductFilter(category)}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="product-grid">
-          {visibleProducts.map((product) => (
-            <ProductCard product={product} key={product.name} />
-          ))}
-        </div>
-      </section>
-    </div>
-  );
+function ProvidersPage({ activeCategory, selectedCategory, setSelectedCategory, providerForm, setProviderForm, extraFields, setExtraFields, providerProducts, handleAddProviderProduct, error }) {
+  const update = (key, value) => setProviderForm((current) => ({ ...current, [key]: value }));
+  return <div className="page providers-page"><section className="partner-hero"><PageIntro eyebrow="For beauty partners" title="Bring thoughtful products into a more intelligent care experience." text="Share the formula, texture, purpose, and hair profiles behind your product. Trichofy uses meaningful detail to make better matches."/></section><section className="partner-form-section section-pad"><aside><p className="kicker">Choose a category</p>{providerCategories.map((category, index) => <button key={category.id} className={selectedCategory === category.id ? "active" : ""} onClick={() => setSelectedCategory(category.id)}><span>0{index + 1}</span><div><strong>{category.label}</strong><small>{category.description}</small></div></button>)}</aside><form onSubmit={handleAddProviderProduct}><div className="form-intro"><p className="kicker">Product profile</p><h2>{activeCategory.label}</h2><p>{activeCategory.description}</p></div><div className="form-grid"><Field label="Product name"><input value={providerForm.name} onChange={(e) => update("name", e.target.value)} placeholder="e.g. Nourishing Castor Oil"/></Field><Field label="Brand"><input value={providerForm.brand} onChange={(e) => update("brand", e.target.value)} placeholder="Your brand name"/></Field><Field label="Best for"><input value={providerForm.hairTypes} onChange={(e) => update("hairTypes", e.target.value)} placeholder="Curly, coily, straight"/></Field><Field label="Image filename or URL"><input value={providerForm.imageUrl} onChange={(e) => update("imageUrl", e.target.value)} placeholder="product-image.jpg"/></Field>{activeCategory.questions.map((question) => <Field label={question.label} key={question.key}><input value={extraFields[question.key] || ""} onChange={(e) => setExtraFields((current) => ({ ...current, [question.key]: e.target.value }))} placeholder={question.placeholder}/></Field>)}<Field label="The product story" wide><textarea rows="5" value={providerForm.description} onChange={(e) => update("description", e.target.value)} placeholder="Tell us about the ingredients, benefits, and ideal ritual."/></Field></div><Button type="submit">Submit for consideration <Icon name="arrow"/></Button>{error && <p className="form-error">{error}</p>}</form></section>{providerProducts.length > 0 && <section className="section-pad"><SectionHeader eyebrow="Submission preview" title="Recently added."/><div className="product-grid">{providerProducts.map((product, index) => <ProductCard product={product} key={`${product.name}-${index}`}/>)}</div></section>}</div>;
 }
 
-function ProvidersPage({
-  activeCategory,
-  selectedCategory,
-  setSelectedCategory,
-  providerForm,
-  handleProviderChange,
-  extraFields,
-  handleExtraChange,
-  providerProducts,
-  handleAddProviderProduct,
-  error,
-}) {
-  return (
-    <div className="page">
-      <section className="page-hero">
-        <PageIntro
-          eyebrow="Product Providers"
-          title="A professional submission experience for beauty brands."
-          text="Submit products with the level of detail Trichofy needs to match formulas to real hair profiles."
-          align="center"
-        />
-      </section>
-      <section className="section provider-layout">
-        <aside className="provider-categories">
-          <p className="eyebrow">Product category</p>
-          {providerCategories.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              className={selectedCategory === category.id ? "active" : ""}
-              onClick={() => setSelectedCategory(category.id)}
-            >
-              <strong>{category.label}</strong>
-              <span>{category.description}</span>
-            </button>
-          ))}
-        </aside>
-
-        <form className="provider-form-panel" onSubmit={handleAddProviderProduct}>
-          <div>
-            <p className="eyebrow">Submission profile</p>
-            <h2>{activeCategory.label}</h2>
-            <p>{activeCategory.description}</p>
-          </div>
-          <div className="form-grid">
-            <label>
-              <span>Product name</span>
-              <input
-                value={providerForm.name}
-                onChange={(event) => handleProviderChange("name", event.target.value)}
-                placeholder="Castor Oil"
-              />
-            </label>
-            <label>
-              <span>Brand</span>
-              <input
-                value={providerForm.brand}
-                onChange={(event) => handleProviderChange("brand", event.target.value)}
-                placeholder="Native Child"
-              />
-            </label>
-            <label>
-              <span>Target hair types</span>
-              <input
-                value={providerForm.hairTypes}
-                onChange={(event) => handleProviderChange("hairTypes", event.target.value)}
-                placeholder="Curly, coily, straight"
-              />
-            </label>
-            <label>
-              <span>Image filename or URL</span>
-              <input
-                value={providerForm.imageUrl}
-                onChange={(event) => handleProviderChange("imageUrl", event.target.value)}
-                placeholder="castor-oil.jpg.png"
-              />
-            </label>
-            {activeCategory.questions.map((question) => (
-              <label key={question.key}>
-                <span>{question.label}</span>
-                <input
-                  value={extraFields[question.key] || ""}
-                  onChange={(event) => handleExtraChange(question.key, event.target.value)}
-                  placeholder={question.placeholder}
-                />
-              </label>
-            ))}
-            <label className="full">
-              <span>Short description</span>
-              <textarea
-                rows={4}
-                value={providerForm.description}
-                onChange={(event) => handleProviderChange("description", event.target.value)}
-                placeholder="Benefits, ingredients and ideal use."
-              />
-            </label>
-          </div>
-          <Button type="submit">Submit Product</Button>
-          {error && <p className="error">{error}</p>}
-        </form>
-      </section>
-      <section className="section">
-        <SectionHeader eyebrow="Submission preview" title="Recently added products." />
-        {providerProducts.length === 0 && <p className="muted-block">Submitted products will appear here.</p>}
-        <div className="product-grid">
-          {providerProducts.map((product, index) => (
-            <ProductCard product={product} key={`${product.name}-${index}`} />
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
+function Field({ label, wide, children }) { return <label className={wide ? "wide" : ""}><span>{label}</span>{children}</label>; }
 
 function ContactPage() {
-  return (
-    <div className="page">
-      <section className="page-hero split-hero">
-        <PageIntro
-          eyebrow="Contact"
-          title="Support for customers, salons and beauty partners."
-          text="Reach out for collaborations, platform questions, product onboarding or support."
-        />
-        <div className="portrait-frame">
-          <img src="/contact.jpg" alt="Hair care support" />
-        </div>
-      </section>
-      <section className="section contact-layout">
-        <form className="contact-form" onSubmit={(event) => event.preventDefault()}>
-          <label>
-            <span>Full name</span>
-            <input placeholder="Your name" />
-          </label>
-          <label>
-            <span>Email</span>
-            <input type="email" placeholder="you@example.com" />
-          </label>
-          <label>
-            <span>Message</span>
-            <textarea rows={5} placeholder="How can we help?" />
-          </label>
-          <Button type="submit">Send Message</Button>
-        </form>
-        <aside className="contact-details">
-          <div>
-            <p className="eyebrow">Direct contact</p>
-            <h2>Witness Lubisi</h2>
-            <p>
-              <a href="tel:+27720524638">+27 72 052 4638</a>
-            </p>
-            <p>
-              <a href="mailto:witness.lubisi1@gmail.com">witness.lubisi1@gmail.com</a>
-            </p>
-          </div>
-          <div>
-            <p className="eyebrow">Based in</p>
-            <p>South Africa</p>
-          </div>
-        </aside>
-      </section>
-    </div>
-  );
+  return <div className="page contact-page"><section className="contact-hero"><div><p className="kicker light">A conversation begins here</p><h1>How can we care for your next idea?</h1><p>For platform support, brand partnerships, salon collaborations, or a thoughtful conversation about the future of hair intelligence.</p></div></section><section className="contact-section section-pad"><div className="contact-copy"><p className="kicker">Contact Trichofy</p><h2>We would love to hear from you.</h2><p>Leave a note and tell us what brought you here. Every message is read with care.</p><div className="contact-person"><span>WL</span><div><strong>Witness Lubisi</strong><p>Founder · South Africa</p></div></div><div className="direct-contact"><a href="mailto:witness.lubisi1@gmail.com">witness.lubisi1@gmail.com</a><a href="tel:+27720524638">+27 72 052 4638</a></div></div><form className="contact-form" onSubmit={(event) => event.preventDefault()}><Field label="Your name"><input placeholder="How should we address you?"/></Field><Field label="Email address"><input type="email" placeholder="you@example.com"/></Field><Field label="I’m reaching out about"><select defaultValue=""><option value="" disabled>Choose a subject</option><option>Platform support</option><option>Brand partnership</option><option>Salon collaboration</option><option>Something else</option></select></Field><Field label="Your message"><textarea rows="6" placeholder="Tell us a little more…"/></Field><Button type="submit">Send your note <Icon name="arrow"/></Button></form></section></div>;
+}
+
+function Footer({ go }) {
+  return <footer className="site-footer"><div className="footer-top"><div><button className="brand footer-brand" onClick={() => go("/")}><span className="brand-mark">T</span><span>Trichofy</span></button><p>Intelligence for the hair you live in.</p></div><div className="footer-links"><div><p>Discover</p><button onClick={() => go("/analysis")}>Hair analysis</button><button onClick={() => go("/treatments")}>Treatments</button><button onClick={() => go("/products")}>Products</button></div><div><p>Company</p><button onClick={() => go("/about")}>Our story</button><button onClick={() => go("/health")}>Health vision</button><button onClick={() => go("/contact")}>Contact</button></div><div><p>Partners</p><button onClick={() => go("/providers")}>Submit a product</button><a href="mailto:witness.lubisi1@gmail.com">Collaborate</a></div></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Trichofy</span><span>Made with care in South Africa</span><span>Hair wellness guidance, not medical diagnosis.</span></div></footer>;
 }
