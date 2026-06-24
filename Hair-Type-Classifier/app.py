@@ -291,6 +291,9 @@ frontend_origin = os.getenv("FRONTEND_ORIGIN")  # e.g. https://trichofy.vercel.a
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://trichofy-frontend-ymh1.onrender.com",
+    "https://www.trichofy.co.za",
+    "https://trichofy.co.za",
 ]
 if frontend_origin:
     origins.append(frontend_origin)
