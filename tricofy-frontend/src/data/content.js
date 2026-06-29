@@ -7,6 +7,7 @@ export const navItems = [
   { path: "/products", label: "Products" },
   { path: "/providers", label: "Providers" },
   { path: "/contact", label: "Contact" },
+  { path: "/terms", label: "Terms" },
 ];
 
 export const benefits = [

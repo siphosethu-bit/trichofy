@@ -131,6 +131,40 @@ function Icon({ name, size = 20 }) {
   return <svg className="icon" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name]}</svg>;
 }
 
+function BrandMark() {
+  return <svg viewBox="0 0 40 48" fill="none" aria-hidden="true">
+    <path d="M11 6 C14.5 9 14.5 15 11 18 C7.5 21 7.5 27 11 30 C14.5 33 14.5 39 11 42" stroke="#EFD7A4" strokeWidth="3.2" strokeLinecap="round"/>
+    <path d="M20 6 C16.5 9 16.5 15 20 18 C23.5 21 23.5 27 20 30 C16.5 33 16.5 39 20 42" stroke="#CFA45C" strokeWidth="3.2" strokeLinecap="round"/>
+    <path d="M29 6 C32.5 9 32.5 15 29 18 C25.5 21 25.5 27 29 30 C32.5 33 32.5 39 29 42" stroke="#AA7830" strokeWidth="3.2" strokeLinecap="round"/>
+  </svg>;
+}
+
+function WaveLines({ className = "" }) {
+  return <svg className={`wave-lines ${className}`.trim()} viewBox="0 0 600 200" fill="none" aria-hidden="true" preserveAspectRatio="none">
+    <path d="M0 50 C120 14 200 96 320 56 C440 16 520 92 600 54" stroke="currentColor" strokeWidth="1.4" opacity=".6"/>
+    <path d="M0 96 C120 60 200 142 320 102 C440 62 520 138 600 100" stroke="currentColor" strokeWidth="1.4" opacity=".42"/>
+    <path d="M0 142 C120 106 200 188 320 148 C440 108 520 184 600 146" stroke="currentColor" strokeWidth="1.4" opacity=".28"/>
+  </svg>;
+}
+
+function useScrollSpy(ids, offset = 130) {
+  const [active, setActive] = useState(ids[0]);
+  useEffect(() => {
+    const onScroll = () => {
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top - offset <= 0) current = id;
+      }
+      setActive(current);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [ids, offset]);
+  return active;
+}
+
 export default function App() {
   const [path, navigate] = usePath();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -241,7 +275,8 @@ export default function App() {
       {path === "/products" && <ProductsPage {...pageProps} />}
       {path === "/providers" && <ProvidersPage {...pageProps} />}
       {path === "/contact" && <ContactPage />}
-      {!navItems.some((item) => item.path === path) && <HomePage go={go} />}
+      {path === "/terms" && <TermsPage />}
+      {!["/", "/about", "/analysis", "/health", "/treatments", "/products", "/providers", "/contact", "/terms"].includes(path) && <HomePage go={go} />}
     </main>
     <Footer go={go} />
   </div>;
@@ -250,7 +285,7 @@ export default function App() {
 function Header({ path, go, menuOpen, setMenuOpen }) {
   return <>
     <header className="site-header">
-      <button className="brand" onClick={() => go("/")} aria-label="Trichofy home"><span className="brand-mark">T</span><span>Trichofy</span></button>
+      <button className="brand" onClick={() => go("/")} aria-label="Trichofy home"><span className="brand-mark"><BrandMark /></span><span>Trichofy</span></button>
       <nav className="desktop-nav" aria-label="Primary navigation">
         {navItems.filter((item) => !["/providers", "/contact"].includes(item.path)).map((item) => <button key={item.path} className={path === item.path ? "active" : ""} onClick={() => go(item.path)}>{item.label}</button>)}
       </nav>
@@ -273,6 +308,7 @@ function HomePage({ go }) {
       <div className="hero-content reveal"><p className="kicker light">The future of personal hair care</p><h1>Intelligence for the hair you live in.</h1><p className="hero-copy">A thoughtful AI consultation that helps you understand your texture, choose with confidence, and care for your hair more intentionally.</p><div className="button-row"><Button onClick={() => go("/analysis")}>Analyze my hair <Icon name="arrow" /></Button><Button variant="glass" onClick={() => go("/treatments")}>Explore treatments</Button></div></div>
       <div className="hero-signature"><span>01</span><p>One image.<br/>A more personal ritual.</p></div>
       <div className="scroll-cue"><span /> Discover</div>
+      <WaveLines />
     </section>
 
     <section className="trust-section section-pad">
@@ -295,7 +331,7 @@ function HomePage({ go }) {
       <div className="vision-copy"><p className="kicker">Beyond the mirror</p><h2>The future of hair care is deeply personal.</h2><p className="lead">We imagine a world where understanding your hair is as natural as caring for it.</p><p>Trichofy is growing into a living hair intelligence platform—connecting pattern, environment, products, routines, and eventually scalp wellness into one considered experience.</p><div className="vision-points"><span>Hair understanding</span><span>Weather intelligence</span><span>Product intelligence</span><span>Future scalp health</span></div><Button variant="outline" onClick={() => go("/about")}>Our point of view <Icon name="arrow" /></Button></div>
     </section>
 
-    <section className="home-closing"><p className="kicker light">Begin with understanding</p><h2>Your hair has always been telling you what it needs.</h2><p>Now there is a more thoughtful way to listen.</p><Button variant="light" onClick={() => go("/analysis")}>Discover my hair profile <Icon name="arrow" /></Button></section>
+    <section className="home-closing"><WaveLines /><p className="kicker light">Begin with understanding</p><h2>Your hair has always been telling you what it needs.</h2><p>Now there is a more thoughtful way to listen.</p><Button variant="light" onClick={() => go("/analysis")}>Discover my hair profile <Icon name="arrow" /></Button></section>
   </div>;
 }
 
@@ -383,6 +419,107 @@ function ContactPage() {
   return <div className="page contact-page"><section className="contact-hero"><div><p className="kicker light">A conversation begins here</p><h1>How can we care for your next idea?</h1><p>For platform support, brand partnerships, salon collaborations, or a thoughtful conversation about the future of hair intelligence.</p></div></section><section className="contact-section section-pad"><div className="contact-copy"><p className="kicker">Contact Trichofy</p><h2>We would love to hear from you.</h2><p>Leave a note and tell us what brought you here. Every message is read with care.</p><div className="contact-person"><span>WL</span><div><strong>Witness Lubisi</strong><p>Founder · South Africa</p></div></div><div className="direct-contact"><a href="mailto:witness.lubisi1@gmail.com">witness.lubisi1@gmail.com</a><a href="tel:+27720524638">+27 72 052 4638</a></div></div><form className="contact-form" onSubmit={(event) => event.preventDefault()}><Field label="Your name"><input placeholder="How should we address you?"/></Field><Field label="Email address"><input type="email" placeholder="you@example.com"/></Field><Field label="I’m reaching out about"><select defaultValue=""><option value="" disabled>Choose a subject</option><option>Platform support</option><option>Brand partnership</option><option>Salon collaboration</option><option>Something else</option></select></Field><Field label="Your message"><textarea rows="6" placeholder="Tell us a little more…"/></Field><Button type="submit">Send your note <Icon name="arrow"/></Button></form></section></div>;
 }
 
+const termsSections = [
+  { id: "about", n: "01", title: "About Trichofy", body: <>
+    <p>Trichofy is a South African BeautyTech company providing AI-powered hair and scalp analysis. By accessing or using the Trichofy website, app, or services (the “Services”), you agree to these Terms &amp; Conditions. If you do not agree, please do not use the Services.</p>
+    <p>These Terms apply to all visitors, registered users, salon partners, and anyone who uploads an image for analysis. We may update these Terms from time to time, and continued use of the Services means you accept the current version.</p>
+  </> },
+  { id: "wellness", n: "02", title: "Wellness Disclaimer", body: <>
+    <p>Trichofy provides cosmetic, grooming, and general wellness guidance only. Our analysis and recommendations are informational and are <strong className="em">not a medical diagnosis, treatment, or professional medical advice.</strong></p>
+    <p>Trichofy does not diagnose, treat, cure, or prevent any disease or medical condition (including hair loss, infections, or dermatological conditions). If you have a scalp or health concern, consult a qualified medical practitioner or dermatologist. Never disregard professional medical advice because of something provided by Trichofy.</p>
+  </> },
+  { id: "ai", n: "03", title: "AI Analysis", body: <>
+    <p>Our hair and scalp insights are generated by machine-learning models that estimate characteristics such as hair type, density, texture, and scalp condition from the images and information you provide.</p>
+    <p>AI results are probabilistic estimates and may be inaccurate or incomplete. Accuracy can vary with image quality, lighting, and angle. You should treat all outputs as guidance, not as definitive fact, and use your own judgement.</p>
+  </> },
+  { id: "images", n: "04", title: "Image Uploads", body: <>
+    <p>To use certain features you may upload photographs of your hair and scalp. By uploading, you confirm that:</p>
+    <ul>
+      <li>You are the person in the image, or have their permission to upload it.</li>
+      <li>You are 18 or older, or have guardian consent.</li>
+      <li>You will not upload unlawful, offensive, or infringing content.</li>
+    </ul>
+    <p>You retain ownership of your images. You grant Trichofy a limited licence to process them solely to deliver the Services described in these Terms.</p>
+  </> },
+  { id: "popia", n: "05", title: "POPIA & Privacy", body: <>
+    <p>Trichofy processes personal information in line with the Protection of Personal Information Act, 2013 (POPIA). Photographs and related data are treated as sensitive and handled with appropriate safeguards.</p>
+    <p>We collect only what we need to provide analysis, store data securely, and we do not sell your personal information. You have the right to access, correct, or request deletion of your data, and to object to processing.</p>
+    <p>For full details, see our Privacy Policy. To exercise your rights, contact our Information Officer (see Contact).</p>
+  </> },
+  { id: "model", n: "06", title: "AI Model Improvement", body: <>
+    <p>With your consent, Trichofy may use de-identified images and analysis data to train and improve our AI models and Services. Where used for model improvement, data is stripped of direct identifiers wherever practicable.</p>
+    <p>You may opt out of model-improvement use at any time in your settings or by contacting us, without losing access to core analysis features.</p>
+  </> },
+  { id: "salons", n: "07", title: "Salons & Partners", body: <>
+    <p>Trichofy may connect you with independent salons, stylists, trichologists, and brand partners. These partners are independent third parties and are not employed or controlled by Trichofy.</p>
+    <p>Any booking, consultation, treatment, or transaction you enter into with a partner is solely between you and that partner. Trichofy is not responsible for the services, conduct, pricing, or outcomes provided by third-party partners.</p>
+  </> },
+  { id: "products", n: "08", title: "Product Recommendations", body: <>
+    <p>Trichofy may suggest hair-care products and routines based on your analysis. Recommendations are suggestions only and may include partner or affiliate products from which we may earn a commission.</p>
+    <p>Always read product labels and patch-test new products. Discontinue use and seek advice if you experience irritation or an adverse reaction. Trichofy is not liable for reactions to third-party products.</p>
+  </> },
+  { id: "rules", n: "09", title: "User Rules", body: <>
+    <p>When using Trichofy you agree not to:</p>
+    <ul>
+      <li>Misuse, disrupt, or attempt to gain unauthorised access to the Services.</li>
+      <li>Upload unlawful, harmful, or infringing content.</li>
+      <li>Reverse engineer, scrape, or copy our models or content.</li>
+      <li>Impersonate others or use the Services for any unlawful purpose.</li>
+    </ul>
+    <p>We may suspend or terminate access for any breach of these Terms.</p>
+  </> },
+  { id: "liability", n: "10", title: "Liability", body: <>
+    <p>To the maximum extent permitted by law, Trichofy provides the Services “as is” and “as available” without warranties of any kind. We are not liable for any indirect, incidental, or consequential loss, or for decisions made in reliance on AI outputs, third-party partners, or product recommendations.</p>
+    <p>Nothing in these Terms excludes liability that cannot be excluded under South African law, including under the Consumer Protection Act where it applies.</p>
+  </> },
+  { id: "law", n: "11", title: "Governing Law", body: <>
+    <p>These Terms are governed by the laws of the Republic of South Africa, and any dispute is subject to the exclusive jurisdiction of the South African courts. If any provision is found unenforceable, the remaining provisions continue in full force.</p>
+  </> },
+  { id: "contact", n: "12", title: "Contact", body: <>
+    <p>Questions about these Terms or your data? We’re here to help.</p>
+    <div className="terms-contact-grid">
+      <div><p>General</p><p>witness.lubisi1@gmail.com</p></div>
+      <div><p>Information Officer</p><p>privacy@trichofy.co.za</p></div>
+      <div><p>Web</p><p>trichofy.co.za</p></div>
+    </div>
+  </> },
+];
+
+function TermsPage() {
+  const ids = useMemo(() => termsSections.map((s) => s.id), []);
+  const active = useScrollSpy(ids, 130);
+  const jump = (event, id) => {
+    event.preventDefault();
+    const el = document.getElementById(id);
+    if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 100, behavior: "smooth" });
+  };
+  return <div className="page terms-page">
+    <section className="terms-hero">
+      <WaveLines />
+      <div className="terms-badge"><span /><b>TRICHOFY · LEGAL</b></div>
+      <h1>Terms &amp; Conditions</h1>
+      <p className="terms-subtitle">Clear, privacy-first terms for AI-powered hair and scalp insights.</p>
+      <p className="terms-updated">Last updated · 28 June 2026</p>
+      <div className="disclaimer-card">
+        <span className="disc-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 5V13.5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"/><circle cx="12" cy="18" r="1.55" fill="currentColor"/></svg></span>
+        <div><strong>Important wellness disclaimer</strong><p>Trichofy provides cosmetic and wellness guidance only. It does not diagnose disease or replace medical advice.</p></div>
+      </div>
+    </section>
+    <section className="terms-body">
+      <aside className="terms-toc">
+        <p className="kicker">On this page</p>
+        <nav>{termsSections.map((s) => <a key={s.id} href={`#${s.id}`} className={active === s.id ? "active" : ""} onClick={(event) => jump(event, s.id)}><span>{s.n}</span>{s.title}</a>)}</nav>
+      </aside>
+      <div className="terms-sections">
+        {termsSections.map((s) => <article id={s.id} className="terms-card" key={s.id}>
+          <div className="terms-card-head"><span>{s.n}</span><i /><h2>{s.title}</h2></div>
+          {s.body}
+        </article>)}
+      </div>
+    </section>
+  </div>;
+}
+
 function Footer({ go }) {
-  return <footer className="site-footer"><div className="footer-top"><div><button className="brand footer-brand" onClick={() => go("/")}><span className="brand-mark">T</span><span>Trichofy</span></button><p>Intelligence for the hair you live in.</p></div><div className="footer-links"><div><p>Discover</p><button onClick={() => go("/analysis")}>Hair analysis</button><button onClick={() => go("/treatments")}>Treatments</button><button onClick={() => go("/products")}>Products</button></div><div><p>Company</p><button onClick={() => go("/about")}>Our story</button><button onClick={() => go("/health")}>Health vision</button><button onClick={() => go("/contact")}>Contact</button></div><div><p>Partners</p><button onClick={() => go("/providers")}>Submit a product</button><a href="mailto:witness.lubisi1@gmail.com">Collaborate</a></div></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Trichofy</span><span>Made with care in South Africa</span><span>Hair wellness guidance, not medical diagnosis.</span></div></footer>;
+  return <footer className="site-footer"><div className="footer-top"><div><button className="brand footer-brand" onClick={() => go("/")}><span className="brand-mark"><BrandMark /></span><span>Trichofy</span></button><p>Intelligence for the hair you live in.</p></div><div className="footer-links"><div><p>Discover</p><button onClick={() => go("/analysis")}>Hair analysis</button><button onClick={() => go("/treatments")}>Treatments</button><button onClick={() => go("/products")}>Products</button></div><div><p>Company</p><button onClick={() => go("/about")}>Our story</button><button onClick={() => go("/health")}>Health vision</button><button onClick={() => go("/contact")}>Contact</button></div><div><p>Legal</p><button onClick={() => go("/terms")}>Terms &amp; Conditions</button><button onClick={() => go("/providers")}>Submit a product</button><a href="mailto:witness.lubisi1@gmail.com">Collaborate</a></div></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Trichofy</span><span>Made with care in South Africa</span><span>Hair wellness guidance, not medical diagnosis.</span></div></footer>;
 }
