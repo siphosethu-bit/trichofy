@@ -103,40 +103,99 @@ function hairInsights(type) {
   return ["Your result is the start of a more intentional relationship with your hair."];
 }
 
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Trichofy",
+  url: "https://www.trichofy.co.za/",
+  description: "AI-powered hair and scalp analysis platform offering personalized haircare recommendations for individuals and salons in South Africa.",
+  sameAs: [],
+};
+
 const pageMeta = {
   "/": {
     title: "Trichofy | AI Hair & Scalp Analysis for South Africa",
     description: "Get personalized hair care recommendations from AI-powered hair and scalp analysis. Built for South African hair types, climate, and salons.",
+    schema: {
+      ...organizationSchema,
+      "@type": "WebSite",
+      name: "Trichofy",
+      publisher: organizationSchema,
+    },
   },
   "/about": {
     title: "About Trichofy | AI Hair Intelligence",
     description: "Learn how Trichofy uses AI to help people understand their hair and scalp, and make smarter, more sustainable haircare decisions.",
+    schema: organizationSchema,
   },
   "/analysis": {
     title: "Hair & Scalp Analysis | Trichofy",
     description: "Upload a photo and get an instant AI-powered analysis of your hair type, condition, and personalized care recommendations.",
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      name: "Trichofy Hair & Scalp Analysis",
+      applicationCategory: "LifestyleApplication",
+      description: "AI-powered tool that analyzes hair and scalp photos to identify hair type and condition, and recommend personalized haircare products and routines.",
+      operatingSystem: "Web",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "ZAR" },
+    },
   },
   "/health": {
     title: "Hair & Scalp Health | Trichofy",
     description: "Understand what your hair and scalp are telling you, with AI-guided insights on health, condition, and care.",
+    schema: organizationSchema,
   },
   "/treatments": {
     title: "Hair Treatments & Routines | Trichofy",
     description: "Personalized treatment and routine recommendations based on your unique hair type, condition, and goals.",
+    schema: organizationSchema,
   },
   "/products": {
     title: "Recommended Hair Products | Trichofy",
     description: "Discover eco-friendly, high-quality hair products matched to your specific hair type and needs by Trichofy AI.",
+    schema: organizationSchema,
   },
   "/providers": {
     title: "Salons & Providers | Trichofy",
     description: "Trichofy equips salons and hair professionals with AI-driven insights and product guidance for every client's hair type.",
+    schema: organizationSchema,
   },
   "/contact": {
     title: "Contact Trichofy",
     description: "Get in touch with the Trichofy team for questions, partnerships, or support.",
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "ContactPage",
+      name: "Contact Trichofy",
+      url: "https://www.trichofy.co.za/contact",
+    },
   },
 };
+
+function usePageMeta(path) {
+  useEffect(() => {
+    const meta = pageMeta[path] || pageMeta["/"];
+    document.title = meta.title;
+
+    let descTag = document.querySelector('meta[name="description"]');
+    if (!descTag) {
+      descTag = document.createElement("meta");
+      descTag.setAttribute("name", "description");
+      document.head.appendChild(descTag);
+    }
+    descTag.setAttribute("content", meta.description);
+
+    let schemaTag = document.getElementById("page-schema");
+    if (!schemaTag) {
+      schemaTag = document.createElement("script");
+      schemaTag.type = "application/ld+json";
+      schemaTag.id = "page-schema";
+      document.head.appendChild(schemaTag);
+    }
+    schemaTag.textContent = JSON.stringify(meta.schema || organizationSchema);
+  }, [path]);
+}
 
 function usePageMeta(path) {
   useEffect(() => {
