@@ -197,20 +197,6 @@ function usePageMeta(path) {
   }, [path]);
 }
 
-function usePageMeta(path) {
-  useEffect(() => {
-    const meta = pageMeta[path] || pageMeta["/"];
-    document.title = meta.title;
-    let tag = document.querySelector('meta[name="description"]');
-    if (!tag) {
-      tag = document.createElement("meta");
-      tag.setAttribute("name", "description");
-      document.head.appendChild(tag);
-    }
-    tag.setAttribute("content", meta.description);
-  }, [path]);
-}
-
 function usePath() {
   const [path, setPath] = useState(window.location.pathname);
   useEffect(() => {
