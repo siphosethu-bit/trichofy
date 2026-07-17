@@ -103,6 +103,55 @@ function hairInsights(type) {
   return ["Your result is the start of a more intentional relationship with your hair."];
 }
 
+const pageMeta = {
+  "/": {
+    title: "Trichofy | AI Hair & Scalp Analysis for South Africa",
+    description: "Get personalized hair care recommendations from AI-powered hair and scalp analysis. Built for South African hair types, climate, and salons.",
+  },
+  "/about": {
+    title: "About Trichofy | AI Hair Intelligence",
+    description: "Learn how Trichofy uses AI to help people understand their hair and scalp, and make smarter, more sustainable haircare decisions.",
+  },
+  "/analysis": {
+    title: "Hair & Scalp Analysis | Trichofy",
+    description: "Upload a photo and get an instant AI-powered analysis of your hair type, condition, and personalized care recommendations.",
+  },
+  "/health": {
+    title: "Hair & Scalp Health | Trichofy",
+    description: "Understand what your hair and scalp are telling you, with AI-guided insights on health, condition, and care.",
+  },
+  "/treatments": {
+    title: "Hair Treatments & Routines | Trichofy",
+    description: "Personalized treatment and routine recommendations based on your unique hair type, condition, and goals.",
+  },
+  "/products": {
+    title: "Recommended Hair Products | Trichofy",
+    description: "Discover eco-friendly, high-quality hair products matched to your specific hair type and needs by Trichofy AI.",
+  },
+  "/providers": {
+    title: "Salons & Providers | Trichofy",
+    description: "Trichofy equips salons and hair professionals with AI-driven insights and product guidance for every client's hair type.",
+  },
+  "/contact": {
+    title: "Contact Trichofy",
+    description: "Get in touch with the Trichofy team for questions, partnerships, or support.",
+  },
+};
+
+function usePageMeta(path) {
+  useEffect(() => {
+    const meta = pageMeta[path] || pageMeta["/"];
+    document.title = meta.title;
+    let tag = document.querySelector('meta[name="description"]');
+    if (!tag) {
+      tag = document.createElement("meta");
+      tag.setAttribute("name", "description");
+      document.head.appendChild(tag);
+    }
+    tag.setAttribute("content", meta.description);
+  }, [path]);
+}
+
 function usePath() {
   const [path, setPath] = useState(window.location.pathname);
   useEffect(() => {
@@ -133,6 +182,7 @@ function Icon({ name, size = 20 }) {
 
 export default function App() {
   const [path, navigate] = usePath();
+  usePageMeta(path);
   const [menuOpen, setMenuOpen] = useState(false);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
