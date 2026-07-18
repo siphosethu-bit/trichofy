@@ -36,9 +36,9 @@ export function ProductCard({ product }) {
   </article>;
 }
 
-export function TreatmentCard({ treatment }) {
+export function TreatmentCard({ treatment, onExplore }) {
   return <article className="treatment-card">
-    <div className="treatment-image"><img src={treatment.image} alt={treatment.title}/><span>Explore</span></div>
+    <div className="treatment-image"><img src={treatment.image} alt=""/><button type="button" onClick={() => onExplore(treatment)} aria-label={`Explore ${treatment.title}`}>Explore</button></div>
     <div className="treatment-body"><p className="kicker">Focused care</p><h3>{treatment.title}</h3><p>{treatment.description}</p><div className="tag-row">{treatment.benefits.map((benefit) => <span className="tag" key={benefit}>{benefit}</span>)}</div></div>
   </article>;
 }

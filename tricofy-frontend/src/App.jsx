@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./index.css";
 import { navItems, productCatalog, providerCategories, treatmentTools } from "./data/content";
+import { evaluateTreatment, getTreatmentAssessment } from "./data/treatmentAssessments";
 import { Button, PageIntro, ProductCard, SectionHeader, TreatmentCard } from "./components/ui";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "https://trichofy-backend.onrender.com";
@@ -23,9 +24,9 @@ const processSteps = [
 ];
 
 const hairTypes = [
-  { name: "Straight", code: "Type 1", note: "Smooth, reflective and naturally fluid", image: "/contact.jpg", position: "50% 30%" },
-  { name: "Wavy", code: "Type 2", note: "Soft movement with an effortless S-pattern", image: "/trichofyBG.jpg", position: "10% 55%" },
-  { name: "Curly", code: "Type 3", note: "Defined spirals with expressive volume", image: "/contact.jpg", position: "50% 58%" },
+  { name: "Straight", code: "Type 1", note: "Smooth, reflective and naturally fluid", image: "/straight-hair-profile.png", position: "50% 50%" },
+  { name: "Wavy", code: "Type 2", note: "Soft movement with an effortless S-pattern", image: "/wavy-hair-profile.png", position: "50% 50%" },
+  { name: "Curly", code: "Type 3", note: "Defined spirals with expressive volume", image: "/curly-hair-profile.png", position: "50% 50%" },
   { name: "Kinky", code: "Type 4", note: "Tight coils, beautiful density and versatility", image: "/trichofyBG.jpg", position: "28% 62%" },
   { name: "Dreadlocks", code: "Protective style", note: "A storied style shaped with patience and care", image: "/trichofyBG.jpg", position: "76% 52%" },
 ];
@@ -34,7 +35,7 @@ const roadmap = [
   { phase: "Now", title: "Scalp insights", text: "A careful view of visible dryness, flaking, irritation, and scalp comfort." },
   { phase: "Next", title: "Hair health tracking", text: "A private visual timeline for noticing meaningful changes in density and condition." },
   { phase: "Future", title: "Professional pathways", text: "Responsible guidance that helps connect concerns with qualified hair and health professionals." },
-  { phase: "Future", title: "Analysis history", text: "A lasting record of profiles, routines, products, and progress—owned by you." },
+  { phase: "Future", title: "Analysis history", text: "A lasting record of profiles, routines, products, and progress, owned by you." },
 ];
 
 const productImageMap = {
@@ -74,11 +75,22 @@ function buildSeasonAdvice(hairType, weather) {
   else if (ht.includes("curly")) tips.push("Pair a moisturising leave-in with a light defining cream or gel.");
   else if (ht.includes("wavy")) tips.push("Choose a light cream or foam so your waves keep their natural movement.");
   else if (ht.includes("straight")) tips.push("Keep oils lightweight and concentrate them gently through your ends.");
-  if (humidity >= 70 || (condition || "").toLowerCase().includes("rain")) tips.push("Humidity is high today—add frizz control and seal your ends with care.");
+  if (humidity >= 70 || (condition || "").toLowerCase().includes("rain")) tips.push("Humidity is high today. Add frizz control and seal your ends with care.");
   if (humidity <= 40) tips.push("The air is dry. Layer water-based moisture, then finish with a light sealant.");
   if (temp >= 28) tips.push("Warm conditions call for comfortable styles and regular, gentle scalp cleansing.");
   if (temp <= 12) tips.push("Cool air can be drying. Deep condition and keep your ends protected.");
   return tips.length ? tips : ["Conditions are balanced today. Your regular routine should serve you beautifully."];
+}
+
+function buildGeneralWeatherAdvice(weather) {
+  if (!weather) return [];
+  const tips = [];
+  if (weather.humidity >= 70) tips.push("High humidity can increase swelling and frizz. Use hold in light layers and avoid repeatedly touching hair while it dries.");
+  else if (weather.humidity <= 35) tips.push("Dry air can speed up moisture loss. Apply leave-in to damp ends and protect hair from friction.");
+  else tips.push("Humidity is moderate. Keep your usual routine and adjust only if your hair feels different.");
+  if (weather.temp >= 28) tips.push("Warm conditions may mean more scalp sweat. Cleanse when the scalp feels coated or uncomfortable.");
+  if (weather.temp <= 12) tips.push("Cool conditions can feel drying. Cover hair with a satin-lined layer where possible.");
+  return tips;
 }
 
 function buildRoutinePlan(hairType, intensity = "balanced") {
@@ -245,6 +257,8 @@ export default function App() {
   const [extraFields, setExtraFields] = useState({});
   const [providerForm, setProviderForm] = useState({ name: "", brand: "", hairTypes: "", imageUrl: "", description: "" });
   const [providerProducts, setProviderProducts] = useState([]);
+  const treatmentSlug = path.startsWith("/treatments/") ? path.slice("/treatments/".length).split("/")[0] : "";
+  const activeTreatmentAssessment = getTreatmentAssessment(treatmentSlug);
 
   useEffect(() => {
     document.body.classList.toggle("menu-is-open", menuOpen);
@@ -333,10 +347,11 @@ export default function App() {
       {path === "/analysis" && <AnalysisPage {...pageProps} />}
       {path === "/health" && <HealthPage go={go} />}
       {path === "/treatments" && <TreatmentsPage {...pageProps} />}
+      {activeTreatmentAssessment && <TreatmentAssessmentPage assessment={activeTreatmentAssessment} go={go} />}
       {path === "/products" && <ProductsPage {...pageProps} />}
       {path === "/providers" && <ProvidersPage {...pageProps} />}
       {path === "/contact" && <ContactPage />}
-      {!navItems.some((item) => item.path === path) && <HomePage go={go} />}
+      {!navItems.some((item) => item.path === path) && !activeTreatmentAssessment && <HomePage go={go} />}
     </main>
     <Footer go={go} />
   </div>;
@@ -345,9 +360,9 @@ export default function App() {
 function Header({ path, go, menuOpen, setMenuOpen }) {
   return <>
     <header className="site-header">
-      <button className="brand" onClick={() => go("/")} aria-label="Trichofy home"><span className="brand-mark">T</span><span>Trichofy</span></button>
+      <button className="brand" onClick={() => go("/")} aria-label="Trichofy home"><span>Trichofy</span></button>
       <nav className="desktop-nav" aria-label="Primary navigation">
-        {navItems.filter((item) => !["/providers", "/contact"].includes(item.path)).map((item) => <button key={item.path} className={path === item.path ? "active" : ""} onClick={() => go(item.path)}>{item.label}</button>)}
+        {navItems.filter((item) => !["/providers", "/contact"].includes(item.path)).map((item) => <button key={item.path} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""} onClick={() => go(item.path)}>{item.label}</button>)}
       </nav>
       <Button className="header-cta" onClick={() => go("/analysis")}>Begin analysis <Icon name="arrow" size={17} /></Button>
       <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label={menuOpen ? "Close menu" : "Open menu"}><Icon name={menuOpen ? "close" : "menu"} size={25} /></button>
@@ -355,7 +370,7 @@ function Header({ path, go, menuOpen, setMenuOpen }) {
     <div className={`mobile-menu ${menuOpen ? "open" : ""}`} aria-hidden={!menuOpen}>
       <div className="mobile-menu-inner">
         <p className="kicker">Explore Trichofy</p>
-        <nav>{navItems.map((item, index) => <button key={item.path} onClick={() => go(item.path)} className={path === item.path ? "active" : ""}><span>0{index + 1}</span>{item.label}<Icon name="arrow" /></button>)}</nav>
+        <nav>{navItems.map((item, index) => <button key={item.path} onClick={() => go(item.path)} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""}><span>0{index + 1}</span>{item.label}<Icon name="arrow" /></button>)}</nav>
         <div className="mobile-menu-foot"><p>Hair care, made personal.</p><a href="mailto:witness.lubisi1@gmail.com">witness.lubisi1@gmail.com</a></div>
       </div>
     </div>
@@ -371,7 +386,7 @@ function HomePage({ go }) {
     </section>
 
     <section className="trust-section section-pad">
-      <SectionHeader eyebrow="Beauty meets intelligence" title="Care that begins with understanding." text="Trichofy turns visual hair signals into calm, useful direction—so your routine feels less like trial and error, and more like knowing." />
+      <SectionHeader eyebrow="Beauty meets intelligence" title="Care that begins with understanding." text="Trichofy turns visual hair signals into calm, useful direction, so your routine feels less like trial and error and more like knowing." />
       <div className="trust-list">{trustFeatures.map((feature) => <article className="trust-item" key={feature.title}><span>{feature.number}</span><div><h3>{feature.title}</h3><p>{feature.text}</p></div><Icon name="arrow" /></article>)}</div>
     </section>
 
@@ -381,13 +396,13 @@ function HomePage({ go }) {
     </section>
 
     <section className="hair-showcase section-pad">
-      <SectionHeader eyebrow="Every pattern has a language" title="Five profiles. Infinite expressions." text="Hair is personal, textured, storied. Our intelligence begins by recognizing the visible pattern—and never ends by reducing you to it." align="center" />
+      <SectionHeader eyebrow="Every pattern has a language" title="Five profiles. Infinite expressions." text="Hair is personal, textured, storied. Our intelligence begins by recognizing the visible pattern, and never ends by reducing you to it." align="center" />
       <div className="hair-type-track">{hairTypes.map((type) => <article className="hair-type-card" key={type.name} style={{ "--hair-image": `url(${type.image})`, "--hair-position": type.position }}><div className="hair-type-overlay"/><div><span>{type.code}</span><h3>{type.name}</h3><p>{type.note}</p></div></article>)}</div>
     </section>
 
     <section className="vision-section section-pad">
       <div className="vision-image"><img src="/trichofyBG.jpg" alt="A protective hairstyle being carefully created"/><span>Hair intelligence<br/>with a human heart.</span></div>
-      <div className="vision-copy"><p className="kicker">Beyond the mirror</p><h2>The future of hair care is deeply personal.</h2><p className="lead">We imagine a world where understanding your hair is as natural as caring for it.</p><p>Trichofy is growing into a living hair intelligence platform—connecting pattern, environment, products, routines, and eventually scalp wellness into one considered experience.</p><div className="vision-points"><span>Hair understanding</span><span>Weather intelligence</span><span>Product intelligence</span><span>Future scalp health</span></div><Button variant="outline" onClick={() => go("/about")}>Our point of view <Icon name="arrow" /></Button></div>
+      <div className="vision-copy"><p className="kicker">Beyond the mirror</p><h2>The future of hair care is deeply personal.</h2><p className="lead">We imagine a world where understanding your hair is as natural as caring for it.</p><p>Trichofy is growing into a living hair intelligence platform, connecting pattern, environment, products, routines, and eventually scalp wellness into one considered experience.</p><div className="vision-points"><span>Hair understanding</span><span>Weather intelligence</span><span>Product intelligence</span><span>Future scalp health</span></div><Button variant="outline" onClick={() => go("/about")}>Our point of view <Icon name="arrow" /></Button></div>
     </section>
 
     <section className="home-closing"><p className="kicker light">Begin with understanding</p><h2>Your hair has always been telling you what it needs.</h2><p>Now there is a more thoughtful way to listen.</p><Button variant="light" onClick={() => go("/analysis")}>Discover my hair profile <Icon name="arrow" /></Button></section>
@@ -408,7 +423,7 @@ function AnalysisPage({ file, preview, loading, error, result, selectFile, handl
   const probabilities = result ? Object.entries(result.probabilities || {}).sort((a, b) => b[1] - a[1]) : [];
   const confidence = probabilities[0]?.[1] || 0;
   return <div className="page analysis-page">
-    <section className="analysis-intro"><PageIntro eyebrow="The Trichofy consultation" title="Let’s get to know your hair." text="One clear photograph becomes a considered profile—your visible pattern, confidence reading, care insights, and product direction." align="center"/><div className="consultation-progress"><span className={file ? "complete" : "active"}>01 <b>Photograph</b></span><i/><span className={loading ? "active" : result ? "complete" : ""}>02 <b>Analysis</b></span><i/><span className={result ? "active" : ""}>03 <b>Your profile</b></span></div></section>
+    <section className="analysis-intro"><PageIntro eyebrow="The Trichofy consultation" title="Let’s get to know your hair." text="One clear photograph becomes a considered profile with your visible pattern, confidence reading, care insights, and product direction." align="center"/><div className="consultation-progress"><span className={file ? "complete" : "active"}>01 <b>Photograph</b></span><i/><span className={loading ? "active" : result ? "complete" : ""}>02 <b>Analysis</b></span><i/><span className={result ? "active" : ""}>03 <b>Your profile</b></span></div></section>
     <section className={`consultation-shell section-pad ${result ? "has-result" : ""}`}>
       <div className="upload-consultation">
         <div className="consultation-heading"><span>01</span><div><p className="kicker">Your photograph</p><h2>Show us your hair as it naturally is.</h2><p>For the most useful reading, use soft natural light and keep your hair clearly visible in the frame.</p></div></div>
@@ -446,22 +461,183 @@ function HealthPage({ go }) {
   </div>;
 }
 
-function TreatmentsPage({ result, routineIntensity, setRoutineIntensity, seasonCity, setSeasonCity, seasonCountry, setSeasonCountry, seasonWeather, seasonLoading, seasonError, handleFetchWeather }) {
+function TreatmentsPage({ result, routineIntensity, setRoutineIntensity, seasonCity, setSeasonCity, seasonCountry, setSeasonCountry, seasonWeather, seasonLoading, seasonError, handleFetchWeather, go }) {
   return <div className="page treatments-page">
-    <section className="treatment-hero"><PageIntro eyebrow="Your care consultation" title="Rituals that move with your hair—and your life." text="Explore focused treatment intelligence, then turn your profile into a weekly rhythm that responds to the world around you."/><div className="treatment-hero-art"><span>Care is not a correction.</span><strong>It is a ritual.</strong></div></section>
-    <section className="treatment-library section-pad"><SectionHeader eyebrow="Treatment library" title="Begin with what your hair is asking for."/><div className="treatment-grid">{treatmentTools.map((treatment) => <TreatmentCard treatment={treatment} key={treatment.id}/>)}</div></section>
-    <section className="ritual-builder section-pad">
-      <div className="ritual-panel"><div className="panel-number">01</div><p className="kicker">Your weekly ritual</p><h2>A rhythm you can return to.</h2><p>Choose the level of care that fits your week. We’ll shape the details around your latest hair profile.</p><div className="segmented-control">{["light", "balanced", "intense"].map((level) => <button className={routineIntensity === level ? "active" : ""} onClick={() => setRoutineIntensity(level)} key={level}>{level}</button>)}</div>{!result ? <EmptyConsultation/> : <div className="routine-timeline">{buildRoutinePlan(result.hair_type, routineIntensity).map((block, index) => <article key={block.title}><span>0{index + 1}</span><div><p>{block.when}</p><h3>{block.title}</h3><ul>{block.steps.map((step) => <li key={step}>{step}</li>)}</ul></div></article>)}</div>}</div>
-      <div className="weather-panel"><div className="panel-number">02</div><p className="kicker">Your local conditions</p><h2>Care for the weather you’re in.</h2><p>Temperature and humidity can change what your hair needs. Enter your location for a thoughtful adjustment.</p><div className="location-fields"><label><span>City</span><input value={seasonCity} onChange={(event) => setSeasonCity(event.target.value)}/></label><label><span>Country</span><input value={seasonCountry} onChange={(event) => setSeasonCountry(event.target.value)}/></label></div><Button onClick={handleFetchWeather} disabled={seasonLoading}>{seasonLoading ? "Reading the weather…" : <><Icon name="location"/> Read my conditions</>}</Button>{seasonError && <p className="form-error">{seasonError}</p>}{seasonWeather && <div className="weather-result"><div><span>{weatherLabel(seasonWeather.condition, seasonWeather.icon)}</span><strong>{seasonWeather.temp.toFixed(0)}°</strong><p>{seasonWeather.city} · {seasonWeather.humidity}% humidity</p></div>{result ? <ul>{buildSeasonAdvice(result.hair_type, seasonWeather).map((tip) => <li key={tip}>{tip}</li>)}</ul> : <p>Complete your hair analysis to turn today’s conditions into personal guidance.</p>}</div>}</div>
+    <section className="treatment-hero"><PageIntro eyebrow="Your care consultation" title="Rituals that move with your hair and your life." text="Explore focused treatment intelligence, then turn your profile into a weekly rhythm that responds to the world around you."/><div className="treatment-hero-art"><span>Care is not a correction.</span><strong>It is a ritual.</strong></div></section>
+    <section className="treatment-library section-pad"><SectionHeader eyebrow="Treatment library" title="Begin with what your hair is asking for." text="Each guided assessment uses your own observations to offer a practical starting point."/><div className="treatment-grid">{treatmentTools.map((treatment) => <TreatmentCard treatment={treatment} onExplore={() => go(`/treatments/${treatment.id === "curl" ? "curl-pattern" : treatment.id}`)} key={treatment.id}/>)}</div></section>
+    <section className="ritual-builder" id="care-planner">
+      <div className="planner-intro">
+        <p className="kicker light">Care that responds</p>
+        <h2>A routine shaped around your life.</h2>
+        <p>Build a weekly rhythm around your hair profile, available time and local conditions.</p>
+      </div>
+      <div className="planner-grid">
+        <div className="ritual-panel">
+          <div className="panel-heading"><div><p className="kicker">Your weekly ritual</p><h2>A rhythm you can return to.</h2></div><span className="panel-number">01</span></div>
+          <p>Choose the level of care that fits your week. We’ll shape the details around your latest hair profile.</p>
+          <div className="segmented-control" aria-label="Routine intensity">{["light", "balanced", "intense"].map((level) => <button type="button" className={routineIntensity === level ? "active" : ""} aria-pressed={routineIntensity === level} onClick={() => setRoutineIntensity(level)} key={level}>{level}</button>)}</div>
+          {!result ? <EmptyConsultation go={go}/> : <div className="routine-timeline">{buildRoutinePlan(result.hair_type, routineIntensity).map((block, index) => <article key={block.title}><span>0{index + 1}</span><div><p>{block.when}</p><h3>{block.title}</h3><ul>{block.steps.map((step) => <li key={step}>{step}</li>)}</ul></div></article>)}</div>}
+        </div>
+        <div className="weather-panel">
+          <div className="panel-heading"><div><p className="kicker">Your local conditions</p><h2>Care for the weather you’re in.</h2></div><span className="panel-number">02</span></div>
+          <p>Temperature and humidity can change what your hair needs. Enter your location for a thoughtful adjustment.</p>
+          <form className="weather-form" onSubmit={(event) => { event.preventDefault(); handleFetchWeather(); }}>
+            <div className="location-fields">
+              <label><span>City</span><input value={seasonCity} onChange={(event) => setSeasonCity(event.target.value)} placeholder="Johannesburg" autoComplete="address-level2"/></label>
+              <label><span>Country code</span><input value={seasonCountry} onChange={(event) => setSeasonCountry(event.target.value.toUpperCase())} placeholder="ZA" maxLength="2" autoComplete="country"/></label>
+            </div>
+            <Button type="submit" disabled={seasonLoading || !seasonCity.trim() || !seasonCountry.trim()}>{seasonLoading ? "Reading the weather…" : <><Icon name="location"/> Read my conditions</>}</Button>
+          </form>
+          {seasonError && <p className="form-error" role="alert">{seasonError}</p>}
+          {seasonWeather && <div className="weather-result"><div><span>{weatherLabel(seasonWeather.condition, seasonWeather.icon)}</span><strong>{seasonWeather.temp.toFixed(0)}°</strong><p>{seasonWeather.city} · {seasonWeather.humidity}% humidity</p></div><ul>{(result ? buildSeasonAdvice(result.hair_type, seasonWeather) : buildGeneralWeatherAdvice(seasonWeather)).map((tip) => <li key={tip}>{tip}</li>)}</ul>{!result && <small>General weather guidance. Complete your hair analysis for advice shaped around your profile.</small>}</div>}
+        </div>
+      </div>
     </section>
   </div>;
 }
 
-function EmptyConsultation() { return <div className="empty-consultation"><Icon name="spark"/><p>Complete your hair analysis first, and your personal ritual will meet you here.</p><a href="/analysis">Begin analysis</a></div>; }
+function TreatmentAssessmentPage({ assessment, go }) {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [result, setResult] = useState(null);
+  const question = assessment.questions[step];
+  const selectedOption = question ? answers[question.id] : undefined;
+
+  useEffect(() => {
+    setStep(0);
+    setAnswers({});
+    setResult(null);
+  }, [assessment.id]);
+
+  const chooseOption = (optionIndex) => {
+    setAnswers((current) => ({ ...current, [question.id]: optionIndex }));
+  };
+
+  const continueAssessment = () => {
+    if (selectedOption === undefined) return;
+    if (step < assessment.questions.length - 1) {
+      setStep((current) => current + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    setResult(evaluateTreatment(assessment, answers));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const goBack = () => {
+    if (step > 0) setStep((current) => current - 1);
+    else go("/treatments");
+  };
+
+  const retake = () => {
+    setAnswers({});
+    setResult(null);
+    setStep(0);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const suggestedProducts = result
+    ? productCatalog.filter((product) => result.categories?.includes(product.category)).slice(0, 3)
+    : [];
+
+  return <div className="page treatment-experience-page">
+    <section className="assessment-header">
+      <button className="assessment-back" type="button" onClick={() => go("/treatments")}><span>←</span> All treatments</button>
+      <p className="kicker">{assessment.eyebrow}</p>
+      <h1>{assessment.title}</h1>
+      <p>{assessment.intro}</p>
+    </section>
+
+    {!result ? <section className="assessment-shell" aria-live="polite">
+      <aside className="assessment-context">
+        <p className="kicker">How this works</p>
+        <h2>Your observations lead the guidance.</h2>
+        <p>{assessment.notice}</p>
+        <div className="assessment-steps">
+          {assessment.questions.map((item, index) => <span className={index < step ? "complete" : index === step ? "active" : ""} key={item.id}>
+            <b>{index < step ? "✓" : `0${index + 1}`}</b>{item.prompt}
+          </span>)}
+        </div>
+      </aside>
+
+      <div className="assessment-question">
+        <div className="assessment-progress" aria-label={`Question ${step + 1} of ${assessment.questions.length}`}>
+          <span style={{ width: `${((step + 1) / assessment.questions.length) * 100}%` }}/>
+        </div>
+        <p className="question-count">Question {step + 1} of {assessment.questions.length}</p>
+        <h2>{question.prompt}</h2>
+        {question.help && <p className="question-help">{question.help}</p>}
+        <div className="assessment-options" role="radiogroup" aria-label={question.prompt}>
+          {question.options.map((option, index) => <button
+            type="button"
+            role="radio"
+            aria-checked={selectedOption === index}
+            className={selectedOption === index ? "selected" : ""}
+            onClick={() => chooseOption(index)}
+            key={option.label}
+          ><span>{String.fromCharCode(65 + index)}</span>{option.label}<i>✓</i></button>)}
+        </div>
+        <div className="assessment-actions">
+          <Button variant="outline" onClick={goBack}>{step === 0 ? "Exit" : "Back"}</Button>
+          <Button onClick={continueAssessment} disabled={selectedOption === undefined}>
+            {step === assessment.questions.length - 1 ? "See my guidance" : "Continue"} <Icon name="arrow"/>
+          </Button>
+        </div>
+      </div>
+    </section> : <TreatmentResult assessment={assessment} result={result} products={suggestedProducts} retake={retake} go={go}/>}
+  </div>;
+}
+
+function TreatmentResult({ assessment, result, products, retake, go }) {
+  const needsProfessionalCare = result.flags?.some((flag) => ["scalp-red-flag", "scalp-persistent", "density-change"].includes(flag));
+  return <div className="assessment-result">
+    <section className="result-summary">
+      <p className="kicker">Your guided result</p>
+      <h2>{result.title}</h2>
+      <p>{result.summary}</p>
+      <div className="result-basis"><Icon name="spark"/><span><strong>Based on your responses</strong>This is rule-based guidance from the observations you selected, not a camera or AI diagnosis.</span></div>
+    </section>
+
+    {needsProfessionalCare && <div className="care-alert" role="note">
+      <strong>A professional check would be sensible.</strong>
+      <p>Your responses include a recent or persistent change. Cosmetic guidance cannot establish the cause. Consider speaking with a pharmacist, GP or dermatologist.</p>
+    </div>}
+
+    <section className="result-grid">
+      <div className="next-steps">
+        <p className="kicker">A practical starting point</p>
+        <h2>What to do next</h2>
+        <ol>{result.actions.map((action, index) => <li key={action}><span>0{index + 1}</span><p>{action}</p></li>)}</ol>
+      </div>
+      <div className="resource-panel">
+        <p className="kicker">Useful context</p>
+        <h2>Keep in mind</h2>
+        {assessment.resources.map((resource) => <article key={resource.title}><Icon name="spark"/><div><h3>{resource.title}</h3><p>{resource.text}</p></div></article>)}
+      </div>
+    </section>
+
+    {products.length > 0 && <section className="assessment-products">
+      <SectionHeader eyebrow="Relevant categories" title="Products to consider carefully." text="These catalogue suggestions follow the result category. They are not prescriptions or guaranteed matches."/>
+      <div className="product-grid">{products.map((product) => <ProductCard product={{ ...product, match_score: null }} key={product.name}/>)}</div>
+    </section>}
+
+    <section className="result-controls">
+      <Button variant="outline" onClick={retake}>Retake assessment</Button>
+      <Button onClick={() => go("/products")}>Explore all products <Icon name="arrow"/></Button>
+    </section>
+  </div>;
+}
+
+function EmptyConsultation({ go }) {
+  return <div className="empty-consultation">
+    <div className="empty-consultation-copy"><Icon name="spark"/><div><strong>Make this ritual personal.</strong><p>Use your latest hair analysis, or build a routine directly from a few guided questions.</p></div></div>
+    <div className="empty-consultation-actions"><Button onClick={() => go("/analysis")}>Analyze my hair</Button><Button variant="outline" onClick={() => go("/treatments/routine")}>Build from my answers</Button></div>
+  </div>;
+}
 
 function ProductsPage({ productFilter, setProductFilter, productCategories, visibleProducts, recommendedProducts, go }) {
   return <div className="page products-page">
-    <section className="shop-hero"><div><p className="kicker">The Trichofy edit</p><h1>Less product noise.<br/>More beautiful choices.</h1><p>A considered collection of oils, hydrators, repair treatments, and scalp care—curated around what different hair profiles truly need.</p></div><div className="shop-hero-products"><img src="/products/marula-oil.jpg.png" alt="Marula hair oil"/><img src="/products/shea-butter.jpg.png" alt="Shea butter hair care"/></div></section>
+    <section className="shop-hero"><div><p className="kicker">The Trichofy edit</p><h1>Less product noise.<br/>More beautiful choices.</h1><p>A considered collection of oils, hydrators, repair treatments, and scalp care, curated around what different hair profiles truly need.</p></div><div className="shop-hero-products"><img src="/products/marula-oil.jpg.png" alt="Marula hair oil"/><img src="/products/shea-butter.jpg.png" alt="Shea butter hair care"/></div></section>
     {recommendedProducts.length > 0 && <section className="recommendation-edit section-pad"><SectionHeader eyebrow="Your personal edit" title="Chosen with your profile in mind." text="Recommendations from your latest Trichofy consultation."/><div className="product-grid featured">{recommendedProducts.map((product, index) => <ProductCard product={product} key={`${product.name}-${index}`}/>)}</div></section>}
     <section className="shop-section section-pad"><div className="shop-heading"><SectionHeader eyebrow="Explore the collection" title="Care, beautifully considered."/><div className="filter-pills">{productCategories.map((category) => <button key={category} className={productFilter === category ? "active" : ""} onClick={() => setProductFilter(category)}>{category}</button>)}</div></div>{recommendedProducts.length === 0 && <div className="personal-edit-prompt"><div><Icon name="spark"/><p><strong>Unlock your personal edit.</strong><br/>Analyze your hair to see products selected for your profile.</p></div><Button variant="outline" onClick={() => go("/analysis")}>Analyze my hair</Button></div>}<div className="product-grid">{visibleProducts.map((product) => <ProductCard product={product} key={product.name}/>)}</div></section>
   </div>;
