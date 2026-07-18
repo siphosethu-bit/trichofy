@@ -54,7 +54,7 @@ export const treatmentTools = [
   {
     id: "damage",
     title: "Damage Detection",
-    image: "/products/hydrolyzed-protein.jpg.png",
+    image: "/damage-detection-hair.png",
     description:
       "Reads signs of breakage, frizz and fragile ends so repair choices feel clear.",
     benefits: ["Breakage cues", "Repair support", "Protein balance"],
@@ -62,7 +62,7 @@ export const treatmentTools = [
   {
     id: "density",
     title: "Density Assessment",
-    image: "/products/marula-oil.jpg.png",
+    image: "/density-assessment-hair.png",
     description:
       "Helps understand fullness and strand visibility for product weight decisions.",
     benefits: ["Fullness view", "Styling direction", "Product weight"],
@@ -70,7 +70,7 @@ export const treatmentTools = [
   {
     id: "scalp",
     title: "Scalp Health Insights",
-    image: "/products/jojoba-oil.jpg.png",
+    image: "/curl-pattern-recognition-hair.png",
     description:
       "Supports care decisions around buildup, irritation indicators and gentle cleansing.",
     benefits: ["Scalp comfort", "Cleanse rhythm", "Soothing care"],
@@ -78,7 +78,7 @@ export const treatmentTools = [
   {
     id: "curl",
     title: "Curl Pattern Recognition",
-    image: "/products/castor-oil.jpg.png",
+    image: "/curl-pattern-hair.png",
     description:
       "Identifies visible pattern behavior across curls, coils, waves and straight hair.",
     benefits: ["Pattern clarity", "Styling support", "Routine fit"],
@@ -86,7 +86,7 @@ export const treatmentTools = [
   {
     id: "routine",
     title: "Routine Planning",
-    image: "/products/shea-butter.jpg.png",
+    image: "/routine-planning.png",
     description:
       "Turns your analysis into a weekly rhythm for wash day, moisture and protection.",
     benefits: ["Weekly plan", "Care intensity", "Product timing"],
