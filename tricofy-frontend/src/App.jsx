@@ -3,6 +3,8 @@ import "./index.css";
 import { navItems, productCatalog, providerCategories, treatmentTools } from "./data/content";
 import { evaluateTreatment, getTreatmentAssessment } from "./data/treatmentAssessments";
 import { Button, PageIntro, ProductCard, SectionHeader, TreatmentCard } from "./components/ui";
+import { useAuth } from "./auth/useAuth";
+import { AccountPage } from "./auth/AccountPage";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "https://trichofy-backend.onrender.com";
 const API_ROOT = API_BASE_URL.replace(/\/$/, "");
@@ -351,26 +353,38 @@ export default function App() {
       {path === "/products" && <ProductsPage {...pageProps} />}
       {path === "/providers" && <ProvidersPage {...pageProps} />}
       {path === "/contact" && <ContactPage />}
-      {!navItems.some((item) => item.path === path) && !activeTreatmentAssessment && <HomePage go={go} />}
+      {path === "/account" && <AccountPage go={go} />}
+      {!navItems.some((item) => item.path === path) && !activeTreatmentAssessment && path !== "/account" && <HomePage go={go} />}
     </main>
     <Footer go={go} />
   </div>;
 }
 
 function Header({ path, go, menuOpen, setMenuOpen }) {
+  const { user, authLoading } = useAuth();
   return <>
     <header className="site-header">
       <button className="brand" onClick={() => go("/")} aria-label="Trichofy home"><span>Trichofy</span></button>
       <nav className="desktop-nav" aria-label="Primary navigation">
         {navItems.filter((item) => !["/providers", "/contact"].includes(item.path)).map((item) => <button key={item.path} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""} onClick={() => go(item.path)}>{item.label}</button>)}
       </nav>
-      <Button className="header-cta" onClick={() => go("/analysis")}>Begin analysis <Icon name="arrow" size={17} /></Button>
+      <div className="header-actions">
+        {!authLoading && (
+          <button className="account-pill" onClick={() => go("/account")}>
+            {user ? user.name.split(" ")[0] : "Sign in"}
+          </button>
+        )}
+        <Button className="header-cta" onClick={() => go("/analysis")}>Begin analysis <Icon name="arrow" size={17} /></Button>
+      </div>
       <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label={menuOpen ? "Close menu" : "Open menu"}><Icon name={menuOpen ? "close" : "menu"} size={25} /></button>
     </header>
     <div className={`mobile-menu ${menuOpen ? "open" : ""}`} aria-hidden={!menuOpen}>
       <div className="mobile-menu-inner">
         <p className="kicker">Explore Trichofy</p>
-        <nav>{navItems.map((item, index) => <button key={item.path} onClick={() => go(item.path)} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""}><span>0{index + 1}</span>{item.label}<Icon name="arrow" /></button>)}</nav>
+        <nav>
+          {navItems.map((item, index) => <button key={item.path} onClick={() => go(item.path)} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""}><span>0{index + 1}</span>{item.label}<Icon name="arrow" /></button>)}
+          <button onClick={() => go("/account")} className={path === "/account" ? "active" : ""}><span>0{navItems.length + 1}</span>{user ? user.name.split(" ")[0] : "Sign in"}<Icon name="arrow" /></button>
+        </nav>
         <div className="mobile-menu-foot"><p>Hair care, made personal.</p><a href="mailto:witness.lubisi1@gmail.com">witness.lubisi1@gmail.com</a></div>
       </div>
     </div>
@@ -643,8 +657,22 @@ function ProductsPage({ productFilter, setProductFilter, productCategories, visi
   </div>;
 }
 
-function ProvidersPage({ activeCategory, selectedCategory, setSelectedCategory, providerForm, setProviderForm, extraFields, setExtraFields, providerProducts, handleAddProviderProduct, error }) {
+function ProvidersPage({ activeCategory, selectedCategory, setSelectedCategory, providerForm, setProviderForm, extraFields, setExtraFields, providerProducts, handleAddProviderProduct, error, go }) {
   const update = (key, value) => setProviderForm((current) => ({ ...current, [key]: value }));
+  const { user, authLoading } = useAuth();
+
+  if (!authLoading && (!user || user.role !== "provider")) {
+    return <div className="page providers-page">
+      <section className="partner-hero"><PageIntro eyebrow="For beauty partners" title="Bring thoughtful products into a more intelligent care experience." text="Share the formula, texture, purpose, and hair profiles behind your product. Trichofy uses meaningful detail to make better matches."/></section>
+      <section className="section-pad">
+        <div className="provider-gate">
+          <p>{user ? "This area is only for provider accounts. Your account is registered as a user." : "Sign in with a provider account to submit products."}</p>
+          <Button onClick={() => go("/account")}>{user ? "Manage account" : "Sign in as a provider"}</Button>
+        </div>
+      </section>
+    </div>;
+  }
+
   return <div className="page providers-page"><section className="partner-hero"><PageIntro eyebrow="For beauty partners" title="Bring thoughtful products into a more intelligent care experience." text="Share the formula, texture, purpose, and hair profiles behind your product. Trichofy uses meaningful detail to make better matches."/></section><section className="partner-form-section section-pad"><aside><p className="kicker">Choose a category</p>{providerCategories.map((category, index) => <button key={category.id} className={selectedCategory === category.id ? "active" : ""} onClick={() => setSelectedCategory(category.id)}><span>0{index + 1}</span><div><strong>{category.label}</strong><small>{category.description}</small></div></button>)}</aside><form onSubmit={handleAddProviderProduct}><div className="form-intro"><p className="kicker">Product profile</p><h2>{activeCategory.label}</h2><p>{activeCategory.description}</p></div><div className="form-grid"><Field label="Product name"><input value={providerForm.name} onChange={(e) => update("name", e.target.value)} placeholder="e.g. Nourishing Castor Oil"/></Field><Field label="Brand"><input value={providerForm.brand} onChange={(e) => update("brand", e.target.value)} placeholder="Your brand name"/></Field><Field label="Best for"><input value={providerForm.hairTypes} onChange={(e) => update("hairTypes", e.target.value)} placeholder="Curly, coily, straight"/></Field><Field label="Image filename or URL"><input value={providerForm.imageUrl} onChange={(e) => update("imageUrl", e.target.value)} placeholder="product-image.jpg"/></Field>{activeCategory.questions.map((question) => <Field label={question.label} key={question.key}><input value={extraFields[question.key] || ""} onChange={(e) => setExtraFields((current) => ({ ...current, [question.key]: e.target.value }))} placeholder={question.placeholder}/></Field>)}<Field label="The product story" wide><textarea rows="5" value={providerForm.description} onChange={(e) => update("description", e.target.value)} placeholder="Tell us about the ingredients, benefits, and ideal ritual."/></Field></div><Button type="submit">Submit for consideration <Icon name="arrow"/></Button>{error && <p className="form-error">{error}</p>}</form></section>{providerProducts.length > 0 && <section className="section-pad"><SectionHeader eyebrow="Submission preview" title="Recently added."/><div className="product-grid">{providerProducts.map((product, index) => <ProductCard product={product} key={`${product.name}-${index}`}/>)}</div></section>}</div>;
 }
 

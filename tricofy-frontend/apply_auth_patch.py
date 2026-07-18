@@ -13,31 +13,33 @@ def apply(old, new, label):
 
 # 1. imports
 apply(
-'''import { navItems, productCatalog, providerCategories, treatmentTools } from "./data/content";
-import { Button, PageIntro, ProductCard, SectionHeader, TreatmentCard } from "./components/ui";''',
-'''import { navItems, productCatalog, providerCategories, treatmentTools } from "./data/content";
-import { Button, PageIntro, ProductCard, SectionHeader, TreatmentCard } from "./components/ui";
+'''import { Button, PageIntro, ProductCard, SectionHeader, TreatmentCard } from "./components/ui";''',
+'''import { Button, PageIntro, ProductCard, SectionHeader, TreatmentCard } from "./components/ui";
 import { useAuth } from "./auth/useAuth";
 import { AccountPage } from "./auth/AccountPage";''',
 "add auth imports"
 )
 
-# 2. router + header
+# 2. router: add /account route
 apply(
 '''      {path === "/providers" && <ProvidersPage {...pageProps} />}
       {path === "/contact" && <ContactPage />}
-      {!navItems.some((item) => item.path === path) && <HomePage go={go} />}
-    </main>
-    <Footer go={go} />
-  </div>;
-}
+      {!navItems.some((item) => item.path === path) && !activeTreatmentAssessment && <HomePage go={go} />}''',
+'''      {path === "/providers" && <ProvidersPage {...pageProps} />}
+      {path === "/contact" && <ContactPage />}
+      {path === "/account" && <AccountPage go={go} />}
+      {!navItems.some((item) => item.path === path) && !activeTreatmentAssessment && path !== "/account" && <HomePage go={go} />}''',
+"add /account route"
+)
 
-function Header({ path, go, menuOpen, setMenuOpen }) {
+# 3. header: add sign-in pill, wrapped with header-cta in a flex container
+apply(
+'''function Header({ path, go, menuOpen, setMenuOpen }) {
   return <>
     <header className="site-header">
-      <button className="brand" onClick={() => go("/")} aria-label="Trichofy home"><span className="brand-mark">T</span><span>Trichofy</span></button>
+      <button className="brand" onClick={() => go("/")} aria-label="Trichofy home"><span>Trichofy</span></button>
       <nav className="desktop-nav" aria-label="Primary navigation">
-        {navItems.filter((item) => !["/providers", "/contact"].includes(item.path)).map((item) => <button key={item.path} className={path === item.path ? "active" : ""} onClick={() => go(item.path)}>{item.label}</button>)}
+        {navItems.filter((item) => !["/providers", "/contact"].includes(item.path)).map((item) => <button key={item.path} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""} onClick={() => go(item.path)}>{item.label}</button>)}
       </nav>
       <Button className="header-cta" onClick={() => go("/analysis")}>Begin analysis <Icon name="arrow" size={17} /></Button>
       <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label={menuOpen ? "Close menu" : "Open menu"}><Icon name={menuOpen ? "close" : "menu"} size={25} /></button>
@@ -45,42 +47,35 @@ function Header({ path, go, menuOpen, setMenuOpen }) {
     <div className={`mobile-menu ${menuOpen ? "open" : ""}`} aria-hidden={!menuOpen}>
       <div className="mobile-menu-inner">
         <p className="kicker">Explore Trichofy</p>
-        <nav>{navItems.map((item, index) => <button key={item.path} onClick={() => go(item.path)} className={path === item.path ? "active" : ""}><span>0{index + 1}</span>{item.label}<Icon name="arrow" /></button>)}</nav>
+        <nav>{navItems.map((item, index) => <button key={item.path} onClick={() => go(item.path)} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""}><span>0{index + 1}</span>{item.label}<Icon name="arrow" /></button>)}</nav>
         <div className="mobile-menu-foot"><p>Hair care, made personal.</p><a href="mailto:witness.lubisi1@gmail.com">witness.lubisi1@gmail.com</a></div>
       </div>
     </div>
   </>;
 }''',
-'''      {path === "/providers" && <ProvidersPage {...pageProps} />}
-      {path === "/contact" && <ContactPage />}
-      {path === "/account" && <AccountPage go={go} />}
-      {!navItems.some((item) => item.path === path) && path !== "/account" && <HomePage go={go} />}
-    </main>
-    <Footer go={go} />
-  </div>;
-}
-
-function Header({ path, go, menuOpen, setMenuOpen }) {
+'''function Header({ path, go, menuOpen, setMenuOpen }) {
   const { user, authLoading } = useAuth();
   return <>
     <header className="site-header">
-      <button className="brand" onClick={() => go("/")} aria-label="Trichofy home"><span className="brand-mark">T</span><span>Trichofy</span></button>
+      <button className="brand" onClick={() => go("/")} aria-label="Trichofy home"><span>Trichofy</span></button>
       <nav className="desktop-nav" aria-label="Primary navigation">
-        {navItems.filter((item) => !["/providers", "/contact"].includes(item.path)).map((item) => <button key={item.path} className={path === item.path ? "active" : ""} onClick={() => go(item.path)}>{item.label}</button>)}
+        {navItems.filter((item) => !["/providers", "/contact"].includes(item.path)).map((item) => <button key={item.path} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""} onClick={() => go(item.path)}>{item.label}</button>)}
       </nav>
-      {!authLoading && (
-        <button className="account-pill" onClick={() => go("/account")}>
-          {user ? user.name.split(" ")[0] : "Sign in"}
-        </button>
-      )}
-      <Button className="header-cta" onClick={() => go("/analysis")}>Begin analysis <Icon name="arrow" size={17} /></Button>
+      <div className="header-actions">
+        {!authLoading && (
+          <button className="account-pill" onClick={() => go("/account")}>
+            {user ? user.name.split(" ")[0] : "Sign in"}
+          </button>
+        )}
+        <Button className="header-cta" onClick={() => go("/analysis")}>Begin analysis <Icon name="arrow" size={17} /></Button>
+      </div>
       <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label={menuOpen ? "Close menu" : "Open menu"}><Icon name={menuOpen ? "close" : "menu"} size={25} /></button>
     </header>
     <div className={`mobile-menu ${menuOpen ? "open" : ""}`} aria-hidden={!menuOpen}>
       <div className="mobile-menu-inner">
         <p className="kicker">Explore Trichofy</p>
         <nav>
-          {navItems.map((item, index) => <button key={item.path} onClick={() => go(item.path)} className={path === item.path ? "active" : ""}><span>0{index + 1}</span>{item.label}<Icon name="arrow" /></button>)}
+          {navItems.map((item, index) => <button key={item.path} onClick={() => go(item.path)} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""}><span>0{index + 1}</span>{item.label}<Icon name="arrow" /></button>)}
           <button onClick={() => go("/account")} className={path === "/account" ? "active" : ""}><span>0{navItems.length + 1}</span>{user ? user.name.split(" ")[0] : "Sign in"}<Icon name="arrow" /></button>
         </nav>
         <div className="mobile-menu-foot"><p>Hair care, made personal.</p><a href="mailto:witness.lubisi1@gmail.com">witness.lubisi1@gmail.com</a></div>
@@ -88,14 +83,14 @@ function Header({ path, go, menuOpen, setMenuOpen }) {
     </div>
   </>;
 }''',
-"add /account route and header sign-in button"
+"add sign-in button to header (desktop + mobile), wrapped correctly for the grid layout"
 )
 
-# 3. gate the providers page
+# 4. gate the providers page
 apply(
 '''function ProvidersPage({ activeCategory, selectedCategory, setSelectedCategory, providerForm, setProviderForm, extraFields, setExtraFields, providerProducts, handleAddProviderProduct, error }) {
   const update = (key, value) => setProviderForm((current) => ({ ...current, [key]: value }));
-  return <div className="page providers-page"><section className="partner-hero"><PageIntro eyebrow="For beauty partners" title="Bring thoughtful products into a more intelligent care experience." text="Share the formula, texture, purpose, and hair profiles behind your product. Trichofy uses meaningful detail to make better matches."/></section><section className="partner-form-section section-pad"><aside>''',
+  return <div className="page providers-page"><section className="partner-hero">''',
 '''function ProvidersPage({ activeCategory, selectedCategory, setSelectedCategory, providerForm, setProviderForm, extraFields, setExtraFields, providerProducts, handleAddProviderProduct, error, go }) {
   const update = (key, value) => setProviderForm((current) => ({ ...current, [key]: value }));
   const { user, authLoading } = useAuth();
@@ -112,7 +107,7 @@ apply(
     </div>;
   }
 
-  return <div className="page providers-page"><section className="partner-hero"><PageIntro eyebrow="For beauty partners" title="Bring thoughtful products into a more intelligent care experience." text="Share the formula, texture, purpose, and hair profiles behind your product. Trichofy uses meaningful detail to make better matches."/></section><section className="partner-form-section section-pad"><aside>''',
+  return <div className="page providers-page"><section className="partner-hero">''',
 "gate providers page behind provider role"
 )
 

@@ -653,3 +653,22 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* --- Auth --- */
+.header-actions { display: flex; align-items: center; gap: 10px; justify-self: end; }
+.account-pill { border: 1px solid rgba(74,52,40,.35); border-radius: 999px; padding: 9px 18px; font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--primary); background: transparent; transition: border-color .2s, background .2s, color .2s; }
+.account-pill:hover { border-color: var(--primary); background: var(--primary); color: white; }
+.account-hero { padding-bottom: 0; }
+.account-form-section { max-width: 560px; }
+.account-form { max-width: 100%; }
+.role-toggle { display: flex; gap: 10px; margin-bottom: 6px; }
+.role-toggle button { flex: 1; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(74,52,40,.2); background: var(--paper); color: var(--text-soft); font-size: 12px; font-weight: 600; transition: border-color .2s, color .2s, background .2s; }
+.role-toggle button.active { border-color: var(--primary); background: var(--primary); color: white; }
+.account-divider { display: flex; align-items: center; gap: 14px; margin: 4px 0; color: var(--text-soft); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.account-divider::before, .account-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.google-btn-wrap { display: flex; justify-content: center; }
+.google-btn-missing { font-size: 11px; color: var(--text-soft); text-align: center; }
+.account-switch { text-align: center; font-size: 13px; color: var(--text-soft); }
+.account-switch button { color: var(--primary); font-weight: 700; text-decoration: underline; }
+.account-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
+.provider-gate { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; padding: clamp(30px, 5vw, 58px); background: var(--muted); border-radius: 18px; max-width: 640px; }
