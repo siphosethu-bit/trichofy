@@ -14,12 +14,17 @@ export function AccountPage({ go }) {
   const [form, setForm] = useState({ name: "", email: "", password: "", brandName: "" });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    if (mode === "signup" && !agreedToTerms) {
+      setError("Please agree to the Terms & Conditions to create an account.");
+      return;
+    }
     setSubmitting(true);
     try {
       if (mode === "signup") {
@@ -116,7 +121,23 @@ export function AccountPage({ go }) {
             />
           </Field>
 
-          <Button type="submit" disabled={submitting}>
+          {mode === "signup" && (
+            <label className="terms-checkbox">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+              />
+              <span>
+                I agree to Trichofy's{" "}
+                <button type="button" className="terms-modal-link" onClick={() => go("/terms")}>
+                  Terms &amp; Conditions
+                </button>
+              </span>
+            </label>
+          )}
+
+          <Button type="submit" disabled={submitting || (mode === "signup" && !agreedToTerms)}>
             {submitting ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
           </Button>
 

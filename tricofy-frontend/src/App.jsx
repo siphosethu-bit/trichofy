@@ -4,6 +4,7 @@ import { navItems, productCatalog, providerCategories, treatmentTools } from "./
 import { evaluateTreatment, getTreatmentAssessment } from "./data/treatmentAssessments";
 import { Button, PageIntro, ProductCard, SectionHeader, TreatmentCard } from "./components/ui";
 import { useAuth } from "./auth/useAuth";
+import { TermsPage } from "./TermsPage";
 import { AccountPage } from "./auth/AccountPage";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "https://trichofy-backend.onrender.com";
@@ -353,6 +354,7 @@ export default function App() {
       {path === "/products" && <ProductsPage {...pageProps} />}
       {path === "/providers" && <ProvidersPage {...pageProps} />}
       {path === "/contact" && <ContactPage />}
+      {path === "/terms" && <TermsPage />}
       {path === "/account" && <AccountPage go={go} />}
       {!navItems.some((item) => item.path === path) && !activeTreatmentAssessment && path !== "/account" && <HomePage go={go} />}
     </main>
@@ -683,5 +685,5 @@ function ContactPage() {
 }
 
 function Footer({ go }) {
-  return <footer className="site-footer"><div className="footer-top"><div><button className="brand footer-brand" onClick={() => go("/")}><span className="brand-mark">T</span><span>Trichofy</span></button><p>Intelligence for the hair you live in.</p></div><div className="footer-links"><div><p>Discover</p><button onClick={() => go("/analysis")}>Hair analysis</button><button onClick={() => go("/treatments")}>Treatments</button><button onClick={() => go("/products")}>Products</button></div><div><p>Company</p><button onClick={() => go("/about")}>Our story</button><button onClick={() => go("/health")}>Health vision</button><button onClick={() => go("/contact")}>Contact</button></div><div><p>Partners</p><button onClick={() => go("/providers")}>Submit a product</button><a href="mailto:witness.lubisi1@gmail.com">Collaborate</a></div></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Trichofy</span><span>Made with care in South Africa</span><span>Hair wellness guidance, not medical diagnosis.</span></div></footer>;
+  return <footer className="site-footer"><div className="footer-top"><div><button className="brand footer-brand" onClick={() => go("/")}><span className="brand-mark">T</span><span>Trichofy</span></button><p>Intelligence for the hair you live in.</p></div><div className="footer-links"><div><p>Discover</p><button onClick={() => go("/analysis")}>Hair analysis</button><button onClick={() => go("/treatments")}>Treatments</button><button onClick={() => go("/products")}>Products</button></div><div><p>Company</p><button onClick={() => go("/about")}>Our story</button><button onClick={() => go("/health")}>Health vision</button><button onClick={() => go("/contact")}>Contact</button><button onClick={() => go("/terms")}>Terms & Conditions</button></div><div><p>Partners</p><button onClick={() => go("/providers")}>Submit a product</button><a href="mailto:witness.lubisi1@gmail.com">Collaborate</a></div></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Trichofy</span><span>Made with care in South Africa</span><span>Hair wellness guidance, not medical diagnosis.</span></div></footer>;
 }
