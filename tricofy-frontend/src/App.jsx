@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./index.css";
 import { navItems, productCatalog, providerCategories, treatmentTools } from "./data/content";
 import { evaluateTreatment, getTreatmentAssessment } from "./data/treatmentAssessments";
@@ -219,7 +219,8 @@ function usePath() {
   const navigate = (next) => {
     if (next !== window.location.pathname) window.history.pushState({}, "", next);
     setPath(next);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    window.scrollTo({ top: 0, behavior });
   };
   return [path, navigate];
 }
@@ -230,7 +231,7 @@ function Icon({ name, size = 20 }) {
     upload: <><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/></>,
     spark: <><path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3Z"/><path d="m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z"/></>,
     close: <><path d="m6 6 12 12"/><path d="M18 6 6 18"/></>,
-    menu: <><path d="M4 8h16"/><path d="M4 16h16"/></>,
+    menu: <><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></>,
     check: <path d="m5 12 4 4L19 6"/>,
     location: <><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></>,
   };
@@ -358,19 +359,60 @@ export default function App() {
 }
 
 function Header({ path, go, menuOpen, setMenuOpen }) {
+  const menuButtonRef = useRef(null);
+  const isHome = path === "/";
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [menuOpen, setMenuOpen]);
+
+  const followRoute = (event, nextPath) => {
+    event.preventDefault();
+    go(nextPath);
+  };
+
+  const showProcess = (event) => {
+    event.preventDefault();
+    setMenuOpen(false);
+    if (!isHome) {
+      go("/");
+      window.setTimeout(() => document.getElementById("process")?.scrollIntoView(), 0);
+      return;
+    }
+    document.getElementById("process")?.scrollIntoView();
+  };
+
+  const landingNavigation = [
+    { label: "How it works", href: "#process", onClick: showProcess },
+    { label: "Hair analysis", href: "/analysis", path: "/analysis" },
+    { label: "Hair health", href: "/health", path: "/health" },
+    { label: "Treatments", href: "/treatments", path: "/treatments" },
+  ];
+
   return <>
-    <header className="site-header">
-      <button className="brand" onClick={() => go("/")} aria-label="Trichofy home"><span>Trichofy</span></button>
+    <header className={`site-header ${isHome ? "home-header" : ""}`}>
+      <a className="brand" href="/" onClick={(event) => followRoute(event, "/")} aria-label="Trichofy home"><span>Trichofy</span></a>
       <nav className="desktop-nav" aria-label="Primary navigation">
-        {navItems.filter((item) => !["/providers", "/contact"].includes(item.path)).map((item) => <button key={item.path} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""} onClick={() => go(item.path)}>{item.label}</button>)}
+        {(isHome ? landingNavigation : navItems.filter((item) => !["/providers", "/contact"].includes(item.path))).map((item) => <a key={item.href || item.path} href={item.href || item.path} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""} onClick={item.onClick || ((event) => followRoute(event, item.path))}>{item.label}</a>)}
       </nav>
-      <Button className="header-cta" onClick={() => go("/analysis")}>Begin analysis <Icon name="arrow" size={17} /></Button>
-      <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label={menuOpen ? "Close menu" : "Open menu"}><Icon name={menuOpen ? "close" : "menu"} size={25} /></button>
+      {isHome ? <div className="home-header-actions"><a className="sign-in-link" href={API_ROOT}>Sign in</a><a className="header-analysis-link" href="/analysis" onClick={(event) => followRoute(event, "/analysis")}>Begin analysis</a></div> : <Button className="header-cta" onClick={() => go("/analysis")}>Begin analysis <Icon name="arrow" size={17} /></Button>}
+      <button ref={menuButtonRef} className="menu-toggle" type="button" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-controls="mobile-navigation" aria-label={menuOpen ? "Close menu" : "Open menu"}><Icon name={menuOpen ? "close" : "menu"} size={25} /></button>
     </header>
-    <div className={`mobile-menu ${menuOpen ? "open" : ""}`} aria-hidden={!menuOpen}>
+    <div id="mobile-navigation" className={`mobile-menu ${isHome ? "home-mobile-menu" : ""} ${menuOpen ? "open" : ""}`} aria-hidden={!menuOpen}>
       <div className="mobile-menu-inner">
         <p className="kicker">Explore Trichofy</p>
-        <nav>{navItems.map((item, index) => <button key={item.path} onClick={() => go(item.path)} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""}><span>0{index + 1}</span>{item.label}<Icon name="arrow" /></button>)}</nav>
+        <nav aria-label="Mobile navigation">
+          {landingNavigation.map((item, index) => <a key={item.href} href={item.href} onClick={item.onClick || ((event) => followRoute(event, item.path))} className={path === item.path || (item.path === "/treatments" && path.startsWith("/treatments/")) ? "active" : ""}><span>0{index + 1}</span>{item.label}<Icon name="arrow" /></a>)}
+          <a href={API_ROOT}><span>05</span>Sign in<Icon name="arrow" /></a>
+          <a href="/analysis" onClick={(event) => followRoute(event, "/analysis")}><span>06</span>Begin analysis<Icon name="arrow" /></a>
+        </nav>
         <div className="mobile-menu-foot"><p>Hair care, made personal.</p><a href="mailto:witness.lubisi1@gmail.com">witness.lubisi1@gmail.com</a></div>
       </div>
     </div>
@@ -378,11 +420,31 @@ function Header({ path, go, menuOpen, setMenuOpen }) {
 }
 
 function HomePage({ go }) {
+  const revealNextStep = () => document.getElementById("process-step-2")?.scrollIntoView({ block: "start" });
+
   return <div className="home-page">
-    <section className="home-hero">
-      <div className="hero-content reveal"><p className="kicker light">The future of personal hair care</p><h1>Intelligence for the hair you live in.</h1><p className="hero-copy">A thoughtful AI consultation that helps you understand your texture, choose with confidence, and care for your hair more intentionally.</p><div className="button-row"><Button onClick={() => go("/analysis")}>Analyze my hair <Icon name="arrow" /></Button><Button variant="glass" onClick={() => go("/treatments")}>Explore treatments</Button></div></div>
-      <div className="hero-signature"><span>01</span><p>One image.<br/>A more personal ritual.</p></div>
-      <div className="scroll-cue"><span /> Discover</div>
+    <section className="home-hero" aria-labelledby="home-hero-title">
+      <div className="landing-scene">
+        <picture className="hero-art" aria-hidden="true">
+          <source media="(max-width: 900px)" srcSet="/images/trichofy-hero-mobile.png" />
+          <img src="/images/trichofy-hero-desktop.png" width="1672" height="941" alt="" fetchPriority="high" />
+        </picture>
+        <div className="hero-content reveal">
+          <p className="hero-kicker">Personal hair intelligence</p>
+          <h1 id="home-hero-title"><span>Meet</span><span>Your <i>hair.</i></span></h1>
+          <p className="hero-copy">One clear photo becomes a hair profile, a routine and care guidance shaped around you.</p>
+          <div className="hero-actions">
+            <button className="hero-primary-action" type="button" onClick={() => go("/analysis")}>Build my hair profile</button>
+            <a className="hero-secondary-action" href="#process">See how it works</a>
+          </div>
+        </div>
+        <p className="hero-support">Built for every<br />curl, coil and texture.</p>
+      </div>
+      <section className="hero-process" id="process" aria-label="How Trichofy works">
+        <article className="hero-process-step" id="process-step-1"><div className="step-heading"><span>01</span><span className="step-line" aria-hidden="true" /></div><strong>Add a photo</strong><button className="process-down" type="button" onClick={revealNextStep} aria-label="Continue to read your profile"><span aria-hidden="true" /></button></article>
+        <article className="hero-process-step" id="process-step-2"><div className="step-heading"><span>02</span><span className="step-line" aria-hidden="true" /></div><strong><span>Read your</span> <span>profile</span></strong></article>
+        <article className="hero-process-step" id="process-step-3"><div className="step-heading"><span>03</span><span className="step-line" aria-hidden="true" /></div><strong>Build your routine</strong></article>
+      </section>
     </section>
 
     <section className="trust-section section-pad">
